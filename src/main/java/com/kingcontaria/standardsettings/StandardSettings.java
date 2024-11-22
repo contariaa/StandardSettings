@@ -2,19 +2,24 @@ package com.kingcontaria.standardsettings;
 
 import com.google.common.base.Suppliers;
 import com.google.common.io.Files;
-import com.kingcontaria.standardsettings.mixins.accessors.MinecraftClientAccessor;
-import me.jellysquid.mods.sodium.client.SodiumClientMod;
-import me.jellysquid.mods.sodium.client.gui.SodiumGameOptions;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
+import com.kingcontaria.standardsettings.mixins.accessors.PieChartAccessor;
+import com.mojang.serialization.JsonOps;
+import net.caffeinemc.mods.sodium.client.SodiumClientMod;
+import net.caffeinemc.mods.sodium.client.gui.SodiumGameOptions;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.*;
-import net.minecraft.client.render.entity.PlayerModelPart;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.VideoMode;
 import net.minecraft.client.util.Window;
+import net.minecraft.entity.player.PlayerModelPart;
 import net.minecraft.network.message.ChatVisibility;
+import net.minecraft.particle.ParticlesMode;
 import net.minecraft.resource.SimpleResourceReload;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.Arm;
@@ -195,6 +200,7 @@ public class StandardSettings {
                     case "enableVsync" -> options.getEnableVsync().setValue(Boolean.parseBoolean(strings[1]));
                     case "entityShadows" -> options.getEntityShadows().setValue(Boolean.parseBoolean(strings[1]));
                     case "forceUnicodeFont" -> options.getForceUnicodeFont().setValue(Boolean.parseBoolean(strings[1]));
+                    case "japaneseGlyphVariants" -> options.getJapaneseGlyphVariants().setValue(Boolean.parseBoolean(strings[1]));
                     case "discrete" -> options.getDiscreteMouseScroll().setValue(Boolean.parseBoolean(strings[1]));
                     case "invertYMouse" -> options.getInvertYMouse().setValue(Boolean.parseBoolean(strings[1]));
                     case "reducedDebugInfo" -> options.getReducedDebugInfo().setValue(Boolean.parseBoolean(strings[1]));
@@ -255,10 +261,11 @@ public class StandardSettings {
                     case "chatLineSpacing" -> options.getChatLineSpacing().setValue(Double.parseDouble(strings[1]));
                     case "textBackgroundOpacity" -> options.getTextBackgroundOpacity().setValue(Double.parseDouble(strings[1]));
                     case "backgroundForChatOnly" -> options.getBackgroundForChatOnly().setValue(Boolean.parseBoolean(strings[1]));
+                    case "highContrastBlockOutline" -> options.getHighContrastBlockOutline().setValue(Boolean.parseBoolean(strings[1]));
                     case "fullscreenResolution" -> {
-                        if (!strings[1].equals(window.getVideoMode().isPresent() ? window.getVideoMode().get().asString() : "")) {
-                            window.setVideoMode(VideoMode.fromString(strings[1]));
-                            window.applyVideoMode();
+                        if (!strings[1].equals(window.getFullscreenVideoMode().isPresent() ? window.getFullscreenVideoMode().get().asString() : "")) {
+                            window.setFullscreenVideoMode(VideoMode.fromString(strings[1]));
+                            window.applyFullscreenVideoMode();
                         }
                     }
                     case "advancedItemTooltips" -> options.advancedItemTooltips = Boolean.parseBoolean(strings[1]);
@@ -275,16 +282,20 @@ public class StandardSettings {
                             reloadBakedModelManager();
                         }
                     }
+                    case "inactivityFpsLimit" -> {
+                        // GameOptions#read
+                        JsonReader jsonReader = new JsonReader(new StringReader(strings[1].isEmpty() ? "\"\"" : strings[1]));
+                        JsonElement jsonElement = JsonParser.parseReader(jsonReader);
+                        options.getInactivityFpsLimit().setValue(InactivityFpsLimit.Codec.parse(JsonOps.INSTANCE, jsonElement).getOrThrow());
+                    }
                     case "mainHand" -> options.getMainArm().setValue("\"left\"".equalsIgnoreCase(strings[1]) ? Arm.LEFT : Arm.RIGHT);
                     case "narrator" -> options.getNarrator().setValue(NarratorMode.byId(Integer.parseInt(strings[1])));
                     case "biomeBlendRadius" -> options.getBiomeBlendRadius().setValue(Integer.parseInt(strings[1]));
                     case "mouseWheelSensitivity" -> options.getMouseWheelSensitivity().setValue(Double.parseDouble(strings[1]));
                     case "rawMouseInput" -> options.getRawMouseInput().setValue(Boolean.parseBoolean(strings[1]));
                     case "showAutosaveIndicator" -> options.getShowAutosaveIndicator().setValue(Boolean.parseBoolean(strings[1]));
-                    // Option removed to keep compatibility with 1.19.2
-                     case "chatPreview" -> System.out.println("Option \"chatPreview\" not supported in 1.19.x");
-                             //options.getChatPreview().setValue(Boolean.parseBoolean(strings[1]));
                     case "onlyShowSecureChat" -> options.getOnlyShowSecureChat().setValue(Boolean.parseBoolean(strings[1]));
+                    case "menuBackgroundBlurriness" -> options.getMenuBackgroundBlurriness().setValue(Integer.parseInt(strings[1]));
                     case "key" -> {
                         for (KeyBinding keyBinding : options.allKeys) {
                             if (string0_split[1].equals(keyBinding.getTranslationKey())) {
@@ -303,7 +314,7 @@ public class StandardSettings {
                     case "modelPart" -> {
                         for (PlayerModelPart playerModelPart : PlayerModelPart.values()) {
                             if (string0_split[1].equals(playerModelPart.getName())) {
-                                options.togglePlayerModelPart(playerModelPart, Boolean.parseBoolean(strings[1])); break;
+                                options.setPlayerModelPart(playerModelPart, Boolean.parseBoolean(strings[1])); break;
                             }
                         }
                     }
@@ -327,7 +338,7 @@ public class StandardSettings {
                     case "perspective" -> options.setPerspective(Perspective.values()[Integer.parseInt(strings[1]) % 3]);
                     case "piedirectory" -> {
                         if (!strings[1].split("\\.")[0].equals("root")) break;
-                        ((MinecraftClientAccessor)client).setOpenProfilerSection(strings[1].replace('.','\u001e'));
+                        ((PieChartAccessor) client.getDebugHud().getPieChart()).setCurrentPath(strings[1].replace('.','\u001e'));
                     }
                     case "f1" -> options.hudHidden = Boolean.parseBoolean(strings[1]);
                     case "fovOnWorldJoin" -> fovOnWorldJoin = Optional.of(Double.parseDouble(strings[1]) < 5 ? (int) (Double.parseDouble(strings[1]) * 40.0f + 70.0f) : Integer.parseInt(strings[1]));
@@ -529,6 +540,7 @@ public class StandardSettings {
                 "enableVsync:" + options.getEnableVsync().getValue() + l +
                 "entityShadows:" + options.getEntityShadows().getValue() + l +
                 "forceUnicodeFont:" + options.getForceUnicodeFont().getValue() + l +
+                "japaneseGlyphVariants:" + options.getJapaneseGlyphVariants().getValue() + l +
                 "discrete_mouse_scroll:" + options.getDiscreteMouseScroll().getValue() + l +
                 "invertYMouse:" + options.getInvertYMouse().getValue() + l +
                 "reducedDebugInfo:" + options.getReducedDebugInfo().getValue() + l +
@@ -563,6 +575,7 @@ public class StandardSettings {
                 "chatLineSpacing:" + options.getChatLineSpacing().getValue() + l +
                 "textBackgroundOpacity:" + options.getTextBackgroundOpacity().getValue() + l +
                 "backgroundForChatOnly:" + options.getBackgroundForChatOnly().getValue() + l +
+                "highContrastBlockOutline:" + options.getHighContrastBlockOutline().getValue() + l +
                 "fullscreenResolution:" + (options.fullscreenResolution == null ? "" : options.fullscreenResolution) + l +
                 "advancedItemTooltips:" + options.advancedItemTooltips + l +
                 "pauseOnLostFocus:" + options.pauseOnLostFocus + l +
@@ -572,6 +585,7 @@ public class StandardSettings {
                 "chatScale:" + options.getChatScale().getValue() + l +
                 "chatWidth:" + options.getChatWidth().getValue() + l +
                 "mipmapLevels:" + options.getMipmapLevels().getValue() + l +
+                "inactivityFpsLimit:" + InactivityFpsLimit.Codec.encodeStart(JsonOps.INSTANCE, options.getInactivityFpsLimit().getValue()).getOrThrow() + l +
                 "mainHand:" + (options.getMainArm().getValue() == Arm.LEFT ? "\"left\"" : "\"right\"") + l +
                 "narrator:" + options.getNarrator().getValue().getId() + l +
                 "biomeBlendRadius:" + options.getBiomeBlendRadius().getValue() + l +
@@ -579,7 +593,8 @@ public class StandardSettings {
                 "rawMouseInput:" + options.getRawMouseInput().getValue() + l +
                 "showAutosaveIndicator:" + options.getShowAutosaveIndicator().getValue() + l +
                // "chatPreview:" + options.getChatPreview().getValue() + l +
-                "onlyShowSecureChat:" + options.getOnlyShowSecureChat().getValue() + l);
+                "onlyShowSecureChat:" + options.getOnlyShowSecureChat().getValue() + l +
+                "menuBackgroundBlurriness:" + options.getMenuBackgroundBlurriness().getValue() + l);
         for (KeyBinding keyBinding : options.allKeys) {
             string.append("key_").append(keyBinding.getTranslationKey()).append(":").append(keyBinding.getBoundKeyTranslationKey()).append(l);
         }

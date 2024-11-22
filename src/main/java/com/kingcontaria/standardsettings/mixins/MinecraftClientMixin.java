@@ -1,11 +1,11 @@
 package com.kingcontaria.standardsettings.mixins;
 
 import com.kingcontaria.standardsettings.StandardSettings;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;
 import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.world.LevelLoadingScreen;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,9 +17,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -33,39 +30,11 @@ import java.util.stream.Stream;
 public abstract class MinecraftClientMixin {
     @Shadow @Nullable public Screen currentScreen;
     @Shadow private boolean windowFocused;
+
+    @Shadow public abstract void openGameMenu(boolean pauseOnly);
+
     @Unique
     private int tickCount = -3;
-
-    @Unique
-    private static MethodHandle openGameMenuMethod;
-
-    @Unique
-    private static Class<?> levelLoadingScreenClass;
-
-    /**
-     * Initializes handles to symbols that have different mappings across Minecraft versions
-     * and thus can't be referenced statically.
-     */
-    @Inject(method = "<clinit>", at = @At("TAIL"))
-    private static void initializeMultiMappedSymbolHandles(CallbackInfo ci) {
-        final var resolver = FabricLoader.getInstance().getMappingResolver();
-
-        var openGameMenuMethodName = resolver.mapMethodName("intermediary", "net.minecraft.class_310", "method_20539", "(Z)V");
-        try {
-            StandardSettings.LOGGER.info(openGameMenuMethodName);
-            openGameMenuMethod = MethodHandles.publicLookup().findVirtual(
-                    MinecraftClient.class, openGameMenuMethodName, MethodType.methodType(void.class, boolean.class));
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new RuntimeException("Couldn't find openGameMenu/openPauseMenu method");
-        }
-
-        var levelLoadingScreenClassName = resolver.mapClassName("intermediary", "net.minecraft.class_3928");
-        try {
-            levelLoadingScreenClass = Class.forName(levelLoadingScreenClassName, false, MinecraftClient.class.getClassLoader());
-        } catch (ClassNotFoundException ignored) {
-            throw new IllegalArgumentException("Couldn't find LevelLoadingScreen class");
-        }
-    }
 
     // initialize StandardSettings, doesn't use ClientModInitializer because GameOptions need to be initialized first
     @Inject(method = "<init>", at = @At("RETURN"))
@@ -189,17 +158,7 @@ public abstract class MinecraftClientMixin {
 
     // save the world file name of the last world
     @Dynamic
-    @Inject(
-            method = {
-            // 1.20.5-1.20.6 and others? (mysteriously doesn't work in 1.20.4)
-            "disconnect(Lnet/minecraft/client/gui/screen/Screen;)V",
-            // 1.20.4
-            "Lnet/minecraft/class_310;method_18096(Lnet/minecraft/class_437;)V",
-            },
-            at = @At("HEAD"),
-            require = 1,
-            allow = 1
-    )
+    @Inject(method = "disconnect(Lnet/minecraft/client/gui/screen/Screen;)V", at = @At("HEAD"))
     private void cacheOptions(CallbackInfo ci) {
         try {
             StandardSettings.lastWorld = StandardSettings.client.getServer().getIconFile().get().getParent().getFileName().toString();
@@ -209,7 +168,7 @@ public abstract class MinecraftClientMixin {
     }
     @Inject(method = "tick", at = @At("HEAD"))
     private void standardSettings_OnPauseNextTick(CallbackInfo ci) {
-        if (StandardSettings.f3PauseSoon && !levelLoadingScreenClass.isInstance(currentScreen)) {
+        if (StandardSettings.f3PauseSoon && !(currentScreen instanceof LevelLoadingScreen)) {
             // System.out.println("WHATt: " + tickCount); // useful debug line
             if (windowFocused) {
                 StandardSettings.f3PauseSoon = false;
@@ -222,15 +181,7 @@ public abstract class MinecraftClientMixin {
                 return;
             }
             tickCount = 1;
-            try {
-                //noinspection DataFlowIssue
-                final var client = (MinecraftClient) (Object) this;
-                //noinspection UnreachableCode
-                openGameMenuMethod.invoke(client, true);
-            } catch (Throwable e) {
-                throw new RuntimeException("Failed to open game menu", e);
-            }
-            //noinspection UnreachableCode
+            this.openGameMenu(true);
             StandardSettings.f3PauseSoon = !(currentScreen instanceof GameMenuScreen);
         }
     }

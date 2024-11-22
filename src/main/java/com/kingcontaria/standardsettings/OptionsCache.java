@@ -1,13 +1,15 @@
 package com.kingcontaria.standardsettings;
 
-import com.kingcontaria.standardsettings.mixins.accessors.MinecraftClientAccessor;
+import com.kingcontaria.standardsettings.mixins.accessors.GameOptionsAccessor;
+import com.kingcontaria.standardsettings.mixins.accessors.PieChartAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.*;
-import net.minecraft.client.render.entity.PlayerModelPart;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.VideoMode;
 import net.minecraft.client.util.Window;
+import net.minecraft.entity.player.PlayerModelPart;
 import net.minecraft.network.message.ChatVisibility;
+import net.minecraft.particle.ParticlesMode;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.Arm;
 
@@ -27,6 +29,7 @@ public class OptionsCache {
     private boolean enableVsync;
     private boolean entityShadows;
     private boolean forceUnicodeFont;
+    private boolean japaneseGlyphVariants;
     private boolean discreteMouseScroll;
     private boolean invertYMouse;
     private boolean reducedDebugInfo;
@@ -60,6 +63,7 @@ public class OptionsCache {
     private double chatLineSpacing;
     private double textBackgroundOpacity;
     private boolean backgroundForChatOnly;
+    private boolean highContrastBlockOutline;
     private Optional<VideoMode> fullscreenResolution;
     private boolean advancedItemTooltips;
     private boolean pauseOnLostFocus;
@@ -69,6 +73,7 @@ public class OptionsCache {
     private double chatScale;
     private double chatWidth;
     private int mipmapLevels;
+    private InactivityFpsLimit inactivityFpsLimit;
     private Arm mainArm;
     private NarratorMode narrator;
     private int biomeBlendRadius;
@@ -76,6 +81,7 @@ public class OptionsCache {
     private boolean rawMouseInput;
     private boolean showAutosaveIndicator;
     private boolean onlyShowSecureChat;
+    private int menuBackgroundBlurriness;
     private Optional<Boolean> entityCulling;
     private boolean sneaking;
     private boolean sprinting;
@@ -106,6 +112,7 @@ public class OptionsCache {
         enableVsync = options.getEnableVsync().getValue();
         entityShadows = options.getEntityShadows().getValue();
         forceUnicodeFont = options.getForceUnicodeFont().getValue();
+        japaneseGlyphVariants = options.getJapaneseGlyphVariants().getValue();
         discreteMouseScroll = options.getDiscreteMouseScroll().getValue();
         invertYMouse = options.getInvertYMouse().getValue();
         reducedDebugInfo = options.getReducedDebugInfo().getValue();
@@ -139,7 +146,8 @@ public class OptionsCache {
         chatLineSpacing = options.getChatLineSpacing().getValue();
         textBackgroundOpacity = options.getTextBackgroundOpacity().getValue();
         backgroundForChatOnly = options.getBackgroundForChatOnly().getValue();
-        fullscreenResolution = window.getVideoMode();
+        highContrastBlockOutline = options.getHighContrastBlockOutline().getValue();
+        fullscreenResolution = window.getFullscreenVideoMode();
         advancedItemTooltips = options.advancedItemTooltips;
         pauseOnLostFocus = options.pauseOnLostFocus;
         chatHeightFocused = options.getChatHeightFocused().getValue();
@@ -148,6 +156,7 @@ public class OptionsCache {
         chatScale = options.getChatScale().getValue();
         chatWidth = options.getChatWidth().getValue();
         mipmapLevels = options.getMipmapLevels().getValue();
+        inactivityFpsLimit = options.getInactivityFpsLimit().getValue();
         mainArm = options.getMainArm().getValue();
         narrator = options.getNarrator().getValue();
         biomeBlendRadius = options.getBiomeBlendRadius().getValue();
@@ -155,6 +164,7 @@ public class OptionsCache {
         rawMouseInput = options.getRawMouseInput().getValue();
         showAutosaveIndicator = options.getShowAutosaveIndicator().getValue();
         onlyShowSecureChat = options.getOnlyShowSecureChat().getValue();
+        menuBackgroundBlurriness = options.getMenuBackgroundBlurriness().getValue();
         entityCulling = StandardSettings.getEntityCulling();
         sneaking = options.sneakKey.isPressed();
         sprinting = options.sprintKey.isPressed();
@@ -162,7 +172,7 @@ public class OptionsCache {
         chunkborders = client.debugRenderer.toggleShowChunkBorder();
         hitboxes = client.getEntityRenderDispatcher().shouldRenderHitboxes();
         perspective = options.getPerspective();
-        piedirectory = ((MinecraftClientAccessor)client).getOpenProfilerSection();
+        piedirectory = ((PieChartAccessor) client.getDebugHud().getPieChart()).getCurrentPath();
         hudHidden = options.hudHidden;
         int i = 0;
         for (KeyBinding key : options.allKeys) {
@@ -191,7 +201,14 @@ public class OptionsCache {
         options.getChatLinksPrompt().setValue(chatLinksPrompt);
         options.getEnableVsync().setValue(enableVsync);
         options.getEntityShadows().setValue(entityShadows);
-        options.getForceUnicodeFont().setValue(forceUnicodeFont);
+        if (options.getForceUnicodeFont().getValue() != forceUnicodeFont) {
+            options.getForceUnicodeFont().setValue(forceUnicodeFont);
+            GameOptionsAccessor.callOnFontOptionsChanged();
+        }
+        if (options.getJapaneseGlyphVariants().getValue() != japaneseGlyphVariants) {
+            options.getJapaneseGlyphVariants().setValue(japaneseGlyphVariants);
+            GameOptionsAccessor.callOnFontOptionsChanged();
+        }
         options.getDiscreteMouseScroll().setValue(discreteMouseScroll);
         options.getInvertYMouse().setValue(invertYMouse);
         options.getReducedDebugInfo().setValue(reducedDebugInfo);
@@ -236,10 +253,11 @@ public class OptionsCache {
         options.getChatLineSpacing().setValue(chatLineSpacing);
         options.getTextBackgroundOpacity().setValue(textBackgroundOpacity);
         options.getBackgroundForChatOnly().setValue(backgroundForChatOnly);
-        if (fullscreenResolution != window.getVideoMode()) {
-            window.setVideoMode(fullscreenResolution);
-            window.applyVideoMode();
-            options.fullscreenResolution = window.getVideoMode().toString();
+        options.getHighContrastBlockOutline().setValue(highContrastBlockOutline);
+        if (fullscreenResolution != window.getFullscreenVideoMode()) {
+            window.setFullscreenVideoMode(fullscreenResolution);
+            window.applyFullscreenVideoMode();
+            options.fullscreenResolution = window.getFullscreenVideoMode().toString();
         }
         options.advancedItemTooltips = advancedItemTooltips;
         options.pauseOnLostFocus = pauseOnLostFocus;
@@ -253,6 +271,7 @@ public class OptionsCache {
             client.setMipmapLevels(options.getMipmapLevels().getValue());
             StandardSettings.reloadBakedModelManager();
         }
+        options.getInactivityFpsLimit().setValue(inactivityFpsLimit);
         options.getMainArm().setValue(mainArm);
         options.getNarrator().setValue(narrator);
         options.getBiomeBlendRadius().setValue(biomeBlendRadius);
@@ -260,6 +279,7 @@ public class OptionsCache {
         options.getRawMouseInput().setValue(rawMouseInput);
         options.getShowAutosaveIndicator().setValue(showAutosaveIndicator);
         options.getOnlyShowSecureChat().setValue(onlyShowSecureChat);
+        options.getMenuBackgroundBlurriness().setValue(menuBackgroundBlurriness);
         entityCulling.ifPresent(StandardSettings::setEntityCulling);
         if (options.getSneakToggled().getValue() && (sneaking != options.sneakKey.isPressed())) {
             options.sneakKey.setPressed(true);
@@ -272,7 +292,7 @@ public class OptionsCache {
         }
         client.getEntityRenderDispatcher().setRenderHitboxes(hitboxes);
         options.setPerspective(perspective);
-        ((MinecraftClientAccessor)client).setOpenProfilerSection(piedirectory);
+        ((PieChartAccessor) client.getDebugHud().getPieChart()).setCurrentPath(piedirectory);
         options.hudHidden = hudHidden;
         int i = 0;
         for (KeyBinding keyBinding : options.allKeys) {
@@ -285,7 +305,7 @@ public class OptionsCache {
         }
         i = 0;
         for (PlayerModelPart playerModelPart : PlayerModelPart.values()) {
-            options.togglePlayerModelPart(playerModelPart, playerModelParts[i++]);
+            options.setPlayerModelPart(playerModelPart, playerModelParts[i++]);
         }
 
         StandardSettings.LOGGER.info("Restored cached options for '{}'", this.levelName);
