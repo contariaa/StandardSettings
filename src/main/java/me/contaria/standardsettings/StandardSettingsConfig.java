@@ -217,9 +217,13 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("pieDirectory", "f3", StandardGameOptions::getPieDirectory, StandardGameOptions::setPieDirectory, option -> new LiteralText(option.get()), option -> {
             TextFieldWidget widget = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, 120, 20, option.getName());
             widget.setMaxLength(128);
-            widget.setTextPredicate(string -> string != null && string.startsWith("root"));
+            widget.setTextPredicate(string -> string != null && (string.startsWith("root") || string.isEmpty()));
             widget.setText(option.get());
             widget.setChangedListener(string -> {
+                if (string.isEmpty()) {
+                    widget.setText("root");
+                    return;
+                }
                 option.set(string);
                 for (String suggestion : new String[]{
                         "root.gameRenderer.level.entities",
