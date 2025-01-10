@@ -3,8 +3,6 @@ package com.kingcontaria.standardsettings;
 import com.google.common.base.Suppliers;
 import com.google.common.io.Files;
 import com.kingcontaria.standardsettings.mixins.accessors.MinecraftClientAccessor;
-import me.jellysquid.mods.sodium.client.SodiumClientMod;
-import me.jellysquid.mods.sodium.client.gui.SodiumGameOptions;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
@@ -26,6 +24,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -54,17 +53,44 @@ public class StandardSettings {
     public static String lastWorld;
     public static String[] standardoptionsCache;
     public static Map<File, Long> filesLastModifiedMap;
+    private static Method sodiumClientMod$options;
+    private static Class<?> sodiumGameOptions;
     private static final Field[] entityCulling = new Field[2];
+
+    static {
+        if (FabricLoader.getInstance().isModLoaded("sodium")) {
+            Class<?> sodiumClientMod = null;
+            try {
+                sodiumClientMod = Class.forName("me.jellysquid.mods.sodium.client.SodiumClientMod");
+                sodiumGameOptions = Class.forName("me.jellysquid.mods.sodium.client.gui.SodiumGameOptions");
+            } catch (ClassNotFoundException e) {
+                try {
+                    sodiumClientMod = Class.forName("net.caffeinemc.mods.sodium.client.SodiumClientMod");
+                    sodiumGameOptions = Class.forName("net.caffeinemc.mods.sodium.client.gui.SodiumGameOptions");
+                } catch (ClassNotFoundException ex) {
+                    LOGGER.error("Failed to locate SodiumClientMod or SodiumGameOptions classes, even though sodium is loaded");
+                }
+            }
+
+            if (sodiumClientMod != null && sodiumGameOptions != null) {
+                try {
+                    sodiumClientMod$options = sodiumClientMod.getMethod("options");
+                } catch (NoSuchMethodException e) {
+                    LOGGER.error("Failed to locate SodiumClientMod;options()V");
+                }
+            }
+        }
+    }
 
     private static final Supplier<Runnable> saveSodiumOptionsSupplier = Suppliers.memoize(() -> {
         // Sodium 0.5.5 and earlier
-        final var writeChangesMethod = Arrays.stream(SodiumGameOptions.class.getMethods())
+        final var writeChangesMethod = Arrays.stream(sodiumGameOptions.getMethods())
                 .filter(method -> method.getName().equals("writeChanges") && method.getParameterCount() == 0)
                 .findAny();
         if (writeChangesMethod.isPresent()) {
             return () -> {
                 try {
-                    writeChangesMethod.get().invoke(SodiumClientMod.options());
+                    writeChangesMethod.get().invoke(sodiumClientMod$options.invoke(null));
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException("Failed to access writeChanges when saving Sodium options", e);
                 } catch (InvocationTargetException e) {
@@ -74,13 +100,13 @@ public class StandardSettings {
         }
 
         // Sodium 0.5.6+
-        final var writeToDiskMethod = Arrays.stream(SodiumGameOptions.class.getMethods())
+        final var writeToDiskMethod = Arrays.stream(sodiumGameOptions.getMethods())
                 .filter(method -> method.getName().equals("writeToDisk"))
                 .findAny();
         if (writeToDiskMethod.isPresent()) {
             return () -> {
                 try {
-                    writeToDiskMethod.get().invoke(null, SodiumClientMod.options());
+                    writeToDiskMethod.get().invoke(null, sodiumClientMod$options.invoke(null));
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException("Failed to access writeToDisk when saving Sodium options", e);
                 } catch (InvocationTargetException e) {
@@ -282,7 +308,7 @@ public class StandardSettings {
                     case "rawMouseInput" -> options.getRawMouseInput().setValue(Boolean.parseBoolean(strings[1]));
                     case "showAutosaveIndicator" -> options.getShowAutosaveIndicator().setValue(Boolean.parseBoolean(strings[1]));
                     // Option removed to keep compatibility with 1.19.2
-                     case "chatPreview" -> System.out.println("Option \"chatPreview\" not supported in 1.19.x");
+                     case "chatPreview" -> LOGGER.warn("Option \"chatPreview\" not supported in 1.19.x");
                              //options.getChatPreview().setValue(Boolean.parseBoolean(strings[1]));
                     case "onlyShowSecureChat" -> options.getOnlyShowSecureChat().setValue(Boolean.parseBoolean(strings[1]));
                     case "key" -> {
@@ -595,11 +621,11 @@ public class StandardSettings {
     }
 
     public static void initializeEntityCulling() {
-        if (!FabricLoader.getInstance().getModContainer("sodium").isPresent()) return;
+        if (sodiumGameOptions == null || sodiumClientMod$options == null) return;
         Class<?> entityCullingClass;
         label:
         {
-            for (Class<?> clas : SodiumGameOptions.class.getClasses()) {
+            for (Class<?> clas : sodiumGameOptions.getClasses()) {
                 for (Field field : clas.getFields()) {
                     if (field.toString().toLowerCase().contains("entityculling")) {
                         entityCulling[0] = field;
@@ -610,7 +636,7 @@ public class StandardSettings {
             }
             return;
         }
-        for (Field field : SodiumGameOptions.class.getFields()) {
+        for (Field field : sodiumGameOptions.getFields()) {
             if (field.getType().equals(entityCullingClass)) {
                 entityCulling[1] = field; return;
             }
@@ -620,9 +646,11 @@ public class StandardSettings {
     public static Optional<Boolean> getEntityCulling() {
         if (entityCulling[0] == null || entityCulling[1] == null) return Optional.empty();
         try {
-            return Optional.of((boolean) entityCulling[0].get(entityCulling[1].get(SodiumClientMod.options())));
+            return Optional.of((boolean) entityCulling[0].get(entityCulling[1].get(sodiumClientMod$options.invoke(null))));
         } catch (IllegalAccessException e) {
             LOGGER.error("Failed to get EntityCulling", e);
+        } catch (InvocationTargetException e) {
+            LOGGER.error("Failed to get Sodium options", e);
         }
         return Optional.empty();
     }
@@ -631,9 +659,11 @@ public class StandardSettings {
         if (entityCulling[0] == null || entityCulling[1] == null) return;
         Optional<Boolean> entityCullingTemp = getEntityCulling();
         try {
-            entityCulling[0].set(entityCulling[1].get(SodiumClientMod.options()), value);
+            entityCulling[0].set(entityCulling[1].get(sodiumClientMod$options.invoke(null)), value);
         } catch (IllegalAccessException e) {
             LOGGER.error("Failed to set EntityCulling to " + value, e);
+        } catch (InvocationTargetException e) {
+            LOGGER.error("Failed to get sodium options", e);
         }
         entityCullingTemp.ifPresent(entityCullingBefore -> {
             if (entityCullingBefore != getEntityCulling().get()) {

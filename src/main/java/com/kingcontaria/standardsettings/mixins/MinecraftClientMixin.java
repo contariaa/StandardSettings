@@ -52,7 +52,6 @@ public abstract class MinecraftClientMixin {
 
         var openGameMenuMethodName = resolver.mapMethodName("intermediary", "net.minecraft.class_310", "method_20539", "(Z)V");
         try {
-            StandardSettings.LOGGER.info(openGameMenuMethodName);
             openGameMenuMethod = MethodHandles.publicLookup().findVirtual(
                     MinecraftClient.class, openGameMenuMethodName, MethodType.methodType(void.class, boolean.class));
         } catch (NoSuchMethodException | IllegalAccessException e) {
