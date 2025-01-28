@@ -4,12 +4,13 @@
   "package": "com.kingcontaria.standardsettings.mixins",
   "compatibilityLevel": "JAVA_16",
   "client": [
-    "accessors.BakedModelManagerAccessor",
-    "accessors.MinecraftClientAccessor",
     "CreateWorldScreenMixin",
+    "GameOptionsMixin",
     "MinecraftClientMixin",
     "WorldListWidgetEntryMixin",
-    "WorldSaveHandlerMixin"
+    "WorldSaveHandlerMixin",
+    "accessors.GameOptionsAccessor",
+    "accessors.MinecraftClientAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

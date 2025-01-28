@@ -1,11 +1,9 @@
 package com.kingcontaria.standardsettings;
 
-import com.kingcontaria.standardsettings.mixins.accessors.BakedModelManagerAccessor;
 import com.kingcontaria.standardsettings.mixins.accessors.MinecraftClientAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.*;
 import net.minecraft.client.render.entity.PlayerModelPart;
-import net.minecraft.client.resource.language.LanguageDefinition;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.VideoMode;
 import net.minecraft.client.util.Window;
@@ -52,10 +50,10 @@ public class OptionsCache {
     private ParticlesMode particles;
     private int maxFps;
     private GraphicsMode graphicsMode;
-    private AoMode ao;
+    private boolean ao;
     private CloudRenderMode cloudRenderMode;
     private AttackIndicator attackIndicator;
-    private LanguageDefinition language;
+    private String language;
     private ChatVisibility chatVisibility;
     private double chatOpacity;
     private double chatLineSpacing;
@@ -76,7 +74,6 @@ public class OptionsCache {
     private double mouseWheelSensitivity;
     private boolean rawMouseInput;
     private boolean showAutosaveIndicator;
-    private boolean chatPreview;
     private boolean onlyShowSecureChat;
     private Optional<Boolean> entityCulling;
     private boolean sneaking;
@@ -87,7 +84,7 @@ public class OptionsCache {
     private String piedirectory;
     private boolean hudHidden;
     private final String[] keysAll;
-    private final float[] soundCategories;
+    private final double[] soundCategories;
     private final boolean[] playerModelParts;
 
     public OptionsCache(MinecraftClient client) {
@@ -95,7 +92,7 @@ public class OptionsCache {
         this.options = client.options;
         this.window = client.getWindow();
         keysAll = new String[options.allKeys.length];
-        soundCategories = new float[SoundCategory.values().length];
+        soundCategories = new double[SoundCategory.values().length];
         playerModelParts = new boolean[PlayerModelPart.values().length];
     }
 
@@ -133,11 +130,11 @@ public class OptionsCache {
         maxFps = options.getMaxFps().getValue();
         graphicsMode = options.getGraphicsMode().getValue();
         ao = options.getAo().getValue();
-        cloudRenderMode = options.getCloudRenderMod().getValue();
+        cloudRenderMode = options.getCloudRenderMode().getValue();
         attackIndicator = options.getAttackIndicator().getValue();
         language = client.getLanguageManager().getLanguage();
         chatVisibility = options.getChatVisibility().getValue();
-        chatOpacity = options.getChtOpacity().getValue();
+        chatOpacity = options.getChatOpacity().getValue();
         chatLineSpacing = options.getChatLineSpacing().getValue();
         textBackgroundOpacity = options.getTextBackgroundOpacity().getValue();
         backgroundForChatOnly = options.getBackgroundForChatOnly().getValue();
@@ -156,7 +153,6 @@ public class OptionsCache {
         mouseWheelSensitivity = options.getMouseWheelSensitivity().getValue();
         rawMouseInput = options.getRawMouseInput().getValue();
         showAutosaveIndicator = options.getShowAutosaveIndicator().getValue();
-        chatPreview = options.getChatPreview().getValue();
         onlyShowSecureChat = options.getOnlyShowSecureChat().getValue();
         entityCulling = StandardSettings.getEntityCulling();
         sneaking = options.sneakKey.isPressed();
@@ -227,15 +223,15 @@ public class OptionsCache {
         options.getMaxFps().setValue(maxFps);
         options.getGraphicsMode().setValue(graphicsMode);
         options.getAo().setValue(ao);
-        options.getCloudRenderMod().setValue(cloudRenderMode);
+        options.getCloudRenderMode().setValue(cloudRenderMode);
         options.getAttackIndicator().setValue(attackIndicator);
-        if (!language.getCode().equals(options.language)) {
+        if (!language.equals(options.language)) {
             client.getLanguageManager().setLanguage(language);
             client.getLanguageManager().reload(client.getResourceManager());
-            options.language = client.getLanguageManager().getLanguage().getCode();
+            options.language = client.getLanguageManager().getLanguage();
         }
         options.getChatVisibility().setValue(chatVisibility);
-        options.getChtOpacity().setValue(chatOpacity);
+        options.getChatOpacity().setValue(chatOpacity);
         options.getChatLineSpacing().setValue(chatLineSpacing);
         options.getTextBackgroundOpacity().setValue(textBackgroundOpacity);
         options.getBackgroundForChatOnly().setValue(backgroundForChatOnly);
@@ -254,7 +250,7 @@ public class OptionsCache {
         if (options.getMipmapLevels().getValue() != mipmapLevels) {
             options.getMipmapLevels().setValue(mipmapLevels);
             client.setMipmapLevels(options.getMipmapLevels().getValue());
-            ((BakedModelManagerAccessor)client.getBakedModelManager()).callApply(((BakedModelManagerAccessor)client.getBakedModelManager()).callPrepare(client.getResourceManager(), client.getProfiler()), client.getResourceManager(), client.getProfiler());
+            StandardSettings.reloadBakedModelManager();
         }
         options.getMainArm().setValue(mainArm);
         options.getNarrator().setValue(narrator);
@@ -262,7 +258,7 @@ public class OptionsCache {
         options.getMouseWheelSensitivity().setValue(mouseWheelSensitivity);
         options.getRawMouseInput().setValue(rawMouseInput);
         options.getShowAutosaveIndicator().setValue(showAutosaveIndicator);
-        options.getChatPreview().setValue(chatPreview);
+        // options.getChatPreview().setValue(chatPreview);
         options.getOnlyShowSecureChat().setValue(onlyShowSecureChat);
         entityCulling.ifPresent(StandardSettings::setEntityCulling);
         if (options.getSneakToggled().getValue() && (sneaking != options.sneakKey.isPressed())) {
@@ -285,7 +281,7 @@ public class OptionsCache {
         KeyBinding.updateKeysByCode();
         i = 0;
         for (SoundCategory soundCategory : SoundCategory.values()) {
-            options.setSoundVolume(soundCategory, soundCategories[i++]);
+            options.getSoundVolumeOption(soundCategory).setValue(soundCategories[i++]);
         }
         i = 0;
         for (PlayerModelPart playerModelPart : PlayerModelPart.values()) {
