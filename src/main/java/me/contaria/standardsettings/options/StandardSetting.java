@@ -95,17 +95,24 @@ public abstract class StandardSetting<T> implements SpeedrunOption<T> {
 
     @Override
     public final void fromJson(JsonElement jsonElement) {
-        JsonObject jsonObject = jsonElement.getAsJsonObject();
-        this.enabled = jsonObject.get("enabled").getAsBoolean();
-        this.valueFromJson(jsonObject.get("value"));
+        if (jsonElement.isJsonObject()) {
+            this.enabled = jsonElement.getAsJsonObject().get("enabled").getAsBoolean();
+            this.valueFromJson(jsonElement.getAsJsonObject().get("value"));
+        } else {
+            this.enabled = true;
+            this.valueFromJson(jsonElement);
+        }
     }
 
     protected abstract void valueFromJson(JsonElement jsonElement);
 
     @Override
     public final JsonElement toJson() {
+        if (this.enabled) {
+            return this.valueToJson();
+        }
         JsonObject jsonObject = new JsonObject();
-        jsonObject.add("enabled", new JsonPrimitive(this.enabled));
+        jsonObject.add("enabled", new JsonPrimitive(false));
         jsonObject.add("value", this.valueToJson());
         return jsonObject;
     }
