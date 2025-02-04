@@ -4,9 +4,9 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import me.contaria.standardsettings.StandardGameOptions;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.options.KeyBinding;
-import net.minecraft.client.options.StickyKeyBinding;
+import net.minecraft.client.option.GameOptions;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.option.StickyKeyBinding;
 import net.minecraft.client.sound.SoundManager;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.sound.SoundCategory;
@@ -23,7 +23,7 @@ public abstract class GameOptionsMixin {
             method = "<init>",
             at = @At(
                     value = "NEW",
-                    target = "(Ljava/lang/String;ILjava/lang/String;)Lnet/minecraft/client/options/KeyBinding;"
+                    target = "(Ljava/lang/String;ILjava/lang/String;)Lnet/minecraft/client/option/KeyBinding;"
             )
     )
     private KeyBinding doNotCreateKeyBindings(String translationKey, int code, String category, Operation<KeyBinding> original) {
@@ -37,7 +37,7 @@ public abstract class GameOptionsMixin {
             method = "<init>",
             at = @At(
                     value = "NEW",
-                    target = "(Ljava/lang/String;Lnet/minecraft/client/util/InputUtil$Type;ILjava/lang/String;)Lnet/minecraft/client/options/KeyBinding;"
+                    target = "(Ljava/lang/String;Lnet/minecraft/client/util/InputUtil$Type;ILjava/lang/String;)Lnet/minecraft/client/option/KeyBinding;"
             )
     )
     private KeyBinding doNotCreateKeyBindings(String translationKey, InputUtil.Type type, int code, String category, Operation<KeyBinding> original) {
@@ -51,7 +51,7 @@ public abstract class GameOptionsMixin {
             method = "<init>",
             at = @At(
                     value = "NEW",
-                    target = "(Ljava/lang/String;ILjava/lang/String;Ljava/util/function/BooleanSupplier;)Lnet/minecraft/client/options/StickyKeyBinding;"
+                    target = "(Ljava/lang/String;ILjava/lang/String;Ljava/util/function/BooleanSupplier;)Lnet/minecraft/client/option/StickyKeyBinding;"
             )
     )
     private StickyKeyBinding doNotCreateKeyBindings(String id, int code, String category, BooleanSupplier toggleGetter, Operation<StickyKeyBinding> original) {

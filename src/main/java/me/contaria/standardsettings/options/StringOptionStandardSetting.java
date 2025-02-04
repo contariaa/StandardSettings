@@ -4,8 +4,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonPrimitive;
 import me.contaria.standardsettings.StandardGameOptions;
-import net.minecraft.client.gui.widget.AbstractButtonWidget;
-import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.client.option.GameOptions;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,9 +17,9 @@ public class StringOptionStandardSetting extends StandardSetting<String> {
     private final Function<GameOptions, String> getter;
     private final BiConsumer<GameOptions, String> setter;
     private final Function<StringOptionStandardSetting, Text> getText;
-    private final Function<StringOptionStandardSetting, AbstractButtonWidget> createMainWidget;
+    private final Function<StringOptionStandardSetting, ClickableWidget> createMainWidget;
 
-    public StringOptionStandardSetting(String id, @Nullable String category, StandardGameOptions options, Function<GameOptions, String> getter, BiConsumer<GameOptions, String> setter, Function<StringOptionStandardSetting, Text> getText, Function<StringOptionStandardSetting, AbstractButtonWidget> createMainWidget) {
+    public StringOptionStandardSetting(String id, @Nullable String category, StandardGameOptions options, Function<GameOptions, String> getter, BiConsumer<GameOptions, String> setter, Function<StringOptionStandardSetting, Text> getText, Function<StringOptionStandardSetting, ClickableWidget> createMainWidget) {
         super(id, category, options);
         this.getter = getter;
         this.setter = setter;
@@ -56,7 +56,7 @@ public class StringOptionStandardSetting extends StandardSetting<String> {
     }
 
     @Override
-    public @NotNull AbstractButtonWidget createMainWidget() {
+    public @NotNull ClickableWidget createMainWidget() {
         return this.createMainWidget.apply(this);
     }
 }

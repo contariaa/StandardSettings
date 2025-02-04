@@ -2,14 +2,13 @@ package me.contaria.standardsettings.options;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.StandardGameOptions;
 import me.contaria.standardsettings.StandardSettings;
 import me.contaria.standardsettings.mixin.accessors.OptionAccessor;
-import net.minecraft.client.gui.widget.AbstractButtonWidget;
+import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.OptionButtonWidget;
-import net.minecraft.client.options.CyclingOption;
-import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.option.CyclingOption;
+import net.minecraft.client.option.GameOptions;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,16 +59,16 @@ public class CyclingOptionStandardSetting extends StandardSetting<Integer> {
 
     @Override
     public @NotNull Text getName() {
-        return TextUtil.translatable(((OptionAccessor) this.option).standardsettings$getKey());
+        return ((OptionAccessor) this.option).standardsettings$getDisplayPrefix();
     }
 
     @Override
     public @NotNull Text getDisplayText() {
-        return StandardSetting.getTextWithoutPrefix(this.option.getMessage(this.options), this.option.getDisplayPrefix());
+        return StandardSetting.getTextWithoutPrefix(this.option.getMessage(this.options), ((OptionAccessor) this.option).standardsettings$getDisplayPrefix());
     }
 
     @Override
-    public @NotNull AbstractButtonWidget createMainWidget() {
+    public @NotNull ClickableWidget createMainWidget() {
         return new OptionButtonWidget(0, 0, 120, 20, this.option, this.getText(), button -> {
             this.option.cycle(this.options, 1);
             button.setMessage(this.getText());

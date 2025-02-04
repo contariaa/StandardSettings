@@ -2,14 +2,13 @@ package me.contaria.standardsettings.options;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.StandardGameOptions;
 import me.contaria.standardsettings.mixin.accessors.DoubleOptionAccessor;
 import me.contaria.standardsettings.mixin.accessors.OptionAccessor;
-import net.minecraft.client.gui.widget.AbstractButtonWidget;
+import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.DoubleOptionSliderWidget;
-import net.minecraft.client.options.DoubleOption;
-import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.option.DoubleOption;
+import net.minecraft.client.option.GameOptions;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,16 +45,16 @@ public class DoubleOptionStandardSetting extends StandardSetting<Double> {
 
     @Override
     public @NotNull Text getName() {
-        return TextUtil.translatable(((OptionAccessor) this.option).standardsettings$getKey());
+        return ((OptionAccessor) this.option).standardsettings$getDisplayPrefix();
     }
 
     @Override
     public @NotNull Text getDisplayText() {
-        return StandardSetting.getTextWithoutPrefix(this.option.getDisplayString(this.options), this.option.getDisplayPrefix());
+        return StandardSetting.getTextWithoutPrefix(this.option.getDisplayString(this.options), ((OptionAccessor) this.option).standardsettings$getDisplayPrefix());
     }
 
     @Override
-    public @NotNull AbstractButtonWidget createMainWidget() {
+    public @NotNull ClickableWidget createMainWidget() {
         return new DoubleOptionSliderWidget(this.options, 0, 0, 120, 20, this.option) {
             @Override
             protected void updateMessage() {

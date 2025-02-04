@@ -3,7 +3,7 @@ package me.contaria.standardsettings;
 import me.contaria.standardsettings.compat.SodiumCompat;
 import me.contaria.standardsettings.mixin.accessors.MinecraftClientAccessor;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.util.VideoMode;
 import net.minecraft.util.profiler.ProfileResult;
 
@@ -30,7 +30,7 @@ public class StandardGameOptions extends GameOptions {
     }
 
     @Override
-    public void onPlayerModelPartChange() {
+    public void sendClientSettings() {
     }
 
     public static String getFullscreenResolution(GameOptions options) {
@@ -52,14 +52,14 @@ public class StandardGameOptions extends GameOptions {
         if (options instanceof StandardGameOptions) {
             return ((StandardGameOptions) options).hitBoxes;
         }
-        return MinecraftClient.getInstance().getEntityRenderManager().shouldRenderHitboxes();
+        return MinecraftClient.getInstance().getEntityRenderDispatcher().shouldRenderHitboxes();
     }
 
     public static void setHitBoxes(GameOptions options, boolean value) {
         if (options instanceof StandardGameOptions) {
             ((StandardGameOptions) options).hitBoxes = value;
         } else {
-            MinecraftClient.getInstance().getEntityRenderManager().setRenderHitboxes(value);
+            MinecraftClient.getInstance().getEntityRenderDispatcher().setRenderHitboxes(value);
         }
     }
 

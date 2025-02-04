@@ -1,6 +1,6 @@
 package me.contaria.standardsettings.mixin.accessors;
 
-import net.minecraft.client.options.DoubleOption;
+import net.minecraft.client.option.DoubleOption;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 

@@ -5,9 +5,9 @@ import com.google.gson.JsonPrimitive;
 import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.StandardGameOptions;
 import net.minecraft.client.gui.screen.ScreenTexts;
-import net.minecraft.client.gui.widget.AbstractButtonWidget;
+import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.OptionSliderWidget;
-import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.option.GameOptions;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +59,7 @@ public class SoundCategoryStandardSetting extends StandardSetting<Float> {
     }
 
     @Override
-    public @NotNull AbstractButtonWidget createMainWidget() {
+    public @NotNull ClickableWidget createMainWidget() {
         // see SoundSliderWidget
         return new OptionSliderWidget(this.options, 0, 0, 120, 20, this.get()) {
             {

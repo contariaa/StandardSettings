@@ -14,12 +14,12 @@ public abstract class KeyboardMixin {
             method = "onKey",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/options/KeyBinding;matchesKey(II)Z"
+                    target = "Lnet/minecraft/client/option/KeyBinding;matchesKey(II)Z"
             ),
             slice = @Slice(
                     from = @At(
                             value = "FIELD",
-                            target = "Lnet/minecraft/client/options/GameOptions;keyFullscreen:Lnet/minecraft/client/options/KeyBinding;"
+                            target = "Lnet/minecraft/client/option/GameOptions;keyFullscreen:Lnet/minecraft/client/option/KeyBinding;"
                     ),
                     to = @At(
                             value = "INVOKE",

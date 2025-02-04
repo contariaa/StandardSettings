@@ -5,9 +5,9 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import me.contaria.standardsettings.StandardGameOptions;
 import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.options.NarratorOption;
-import net.minecraft.client.options.Option;
+import net.minecraft.client.option.GameOptions;
+import net.minecraft.client.option.NarratorMode;
+import net.minecraft.client.option.Option;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.NarratorManager;
 import net.minecraft.client.util.Window;
@@ -76,10 +76,10 @@ public abstract class OptionMixin {
             method = "method_18536", // NARRATOR
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/util/NarratorManager;addToast(Lnet/minecraft/client/options/NarratorOption;)V"
+                    target = "Lnet/minecraft/client/util/NarratorManager;addToast(Lnet/minecraft/client/option/NarratorMode;)V"
             )
     )
-    private static boolean doNotAddToast(NarratorManager manager, NarratorOption option, @Local(argsOnly = true) GameOptions options) {
+    private static boolean doNotAddToast(NarratorManager manager, NarratorMode option, @Local(argsOnly = true) GameOptions options) {
         return !(options instanceof StandardGameOptions);
     }
 

@@ -4,8 +4,8 @@ import me.contaria.standardsettings.options.StandardSetting;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.ParentElement;
 import net.minecraft.client.gui.screen.ScreenTexts;
-import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.math.MatrixStack;
 import org.jetbrains.annotations.Nullable;
@@ -13,13 +13,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StandardOptionWidget extends AbstractButtonWidget implements ParentElement {
-    private final AbstractButtonWidget mainWidget;
-    private final AbstractButtonWidget toggle;
+public class StandardOptionWidget extends ClickableWidget implements ParentElement {
+    private final ClickableWidget mainWidget;
+    private final ClickableWidget toggle;
     private Element focused;
     private boolean isDragging;
 
-    public StandardOptionWidget(StandardSetting<?> setting, AbstractButtonWidget mainWidget) {
+    public StandardOptionWidget(StandardSetting<?> setting, ClickableWidget mainWidget) {
         super(mainWidget.x, mainWidget.y, mainWidget.getWidth() + 30, mainWidget.getHeight(), mainWidget.getMessage());
 
         this.mainWidget = mainWidget;

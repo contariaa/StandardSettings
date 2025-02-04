@@ -13,11 +13,11 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ScreenTexts;
-import net.minecraft.client.gui.screen.options.LanguageOptionsScreen;
-import net.minecraft.client.gui.widget.AbstractButtonWidget;
+import net.minecraft.client.gui.screen.option.LanguageOptionsScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.options.*;
+import net.minecraft.client.option.*;
 import net.minecraft.client.render.entity.PlayerModelPart;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.Monitor;
@@ -123,7 +123,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
             }
         });
         this.register("renderDistance", "options.video", Option.RENDER_DISTANCE);
-        this.register("ao", "options.video", Option.AO, options -> options.ao.getValue());
+        this.register("ao", "options.video", Option.AO, options -> options.ao.getId());
         this.register("maxFps", "options.video", Option.FRAMERATE_LIMIT);
         this.register("enableVsync", "options.video", Option.VSYNC);
         this.register("bobView", "options.video", Option.VIEW_BOBBING);
@@ -135,12 +135,14 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         });
         this.register("attackIndicator", "options.video", Option.ATTACK_INDICATOR, options -> options.attackIndicator.getId());
         this.register("gamma", "options.video", new DoubleOption("options.gamma", 0.0, 5.0, 0.0f, options -> options.gamma, (options, value) -> options.gamma = value, (options, option) -> TextUtil.literal((int) (option.get(options) * 100.0) + "%")));
-        this.register("renderClouds", "options.video", Option.CLOUDS, options -> options.cloudRenderMode.getValue());
+        this.register("renderClouds", "options.video", Option.CLOUDS, options -> options.cloudRenderMode.getId());
         this.register("fullscreen", "options.video", Option.FULLSCREEN);
         this.register("particles", "options.video", Option.PARTICLES, options -> options.particles.getId());
         this.register("mipmapLevels", "options.video", Option.MIPMAP_LEVELS);
         this.register("entityShadows", "options.video", Option.ENTITY_SHADOWS);
+        this.register("screenEffectScale", "options.video", Option.DISTORTION_EFFECT_SCALE);
         this.register("entityDistanceScaling", "options.video", Option.ENTITY_DISTANCE_SCALING);
+        this.register("fovEffectScale", "options.video", Option.FOV_EFFECT_SCALE);
         this.register(new BooleanOptionStandardSetting("entityCulling", "options.video", this.options, new BooleanOption("standardsettings.options.entityCulling", StandardGameOptions::getEntityCulling, StandardGameOptions::setEntityCulling)) {
             @Override
             public boolean hasWidget() {
@@ -194,16 +196,17 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("textBackgroundOpacity", "options.chat.title", Option.TEXT_BACKGROUND_OPACITY);
         this.register("chatScale", "options.chat.title", Option.CHAT_SCALE);
         this.register("chatLineSpacing", "options.chat.title", Option.CHAT_LINE_SPACING);
+        this.register("chatDelay", "options.chat.title", Option.CHAT_DELAY_INSTANT);
         this.register("chatWidth", "options.chat.title", Option.CHAT_WIDTH);
         this.register("chatHeightFocused", "options.chat.title", Option.CHAT_HEIGHT_FOCUSED);
-        this.register("chatHeightUnfocused", "options.chat.title", Option.CHAT_HEIGHT_UNFOCUSED);
+        this.register("chatHeightUnfocused", "options.chat.title", Option.SATURATION);
         this.register("narrator", "options.chat.title", Option.NARRATOR, options -> options.narrator.getId());
         this.register("autoSuggestions", "options.chat.title", Option.AUTO_SUGGESTIONS);
+        this.register("hideMatchedNames", "options.chat.title", Option.field_26924);
         this.register("reducedDebugInfo", "options.chat.title", Option.REDUCED_DEBUG_INFO);
 
         // Accessibility Settings
         this.register("backgroundForChatOnly", "options.accessibility.title", Option.TEXT_BACKGROUND, options -> options.backgroundForChatOnly ? 1 : 0);
-        this.register("chatDelay", "options.accessibility.title", Option.CHAT_DELAY_INSTANT);
         this.register("toggleCrouch", "options.accessibility.title", Option.SNEAK_TOGGLED, options -> options.sneakToggled ? 1 : 0);
         this.register("toggleSprint", "options.accessibility.title", Option.SPRINT_TOGGLED, options -> options.sprintToggled ? 1 : 0);
 
@@ -238,7 +241,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         }).disable();
 
         // More Settings
-        this.register("perspective", "more", new CyclingOption("standardsettings.options.perspective", (options, amount) -> options.perspective = (options.perspective + amount) % 3, (options, option) -> TextUtil.translatable("standardsettings.options.perspective." + options.perspective)), options -> options.perspective).disable();
+        this.register("perspective", "more", new CyclingOption("standardsettings.options.perspective", (options, amount) -> options.setPerspective(options.getPerspective().next()), (options, option) -> TextUtil.translatable("standardsettings.options.perspective." + options.getPerspective().ordinal())), options -> options.getPerspective().ordinal()).disable();
         this.register("f1", "more", new BooleanOption("standardsettings.options.f1", options -> options.hudHidden, (options, value) -> options.hudHidden = value)).disable();
         this.register("sneaking", "more", new BooleanOption("standardsettings.options.sneaking", StandardGameOptions::getSneaking, StandardGameOptions::setSneaking)).disable();
         this.register("sprinting", "more", new BooleanOption("standardsettings.options.sprinting", StandardGameOptions::getSprinting, StandardGameOptions::setSprinting)).disable();
@@ -267,7 +270,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         return this.register(new CyclingOptionStandardSetting(id, category, this.options, option, optionGetter));
     }
 
-    private StringOptionStandardSetting register(String id, String category, Function<GameOptions, String> getter, BiConsumer<GameOptions, String> setter, Function<StringOptionStandardSetting, Text> getText, Function<StringOptionStandardSetting, AbstractButtonWidget> createMainWidget) {
+    private StringOptionStandardSetting register(String id, String category, Function<GameOptions, String> getter, BiConsumer<GameOptions, String> setter, Function<StringOptionStandardSetting, Text> getText, Function<StringOptionStandardSetting, ClickableWidget> createMainWidget) {
         return this.register(new StringOptionStandardSetting(id, category, this.options, getter, setter, getText, createMainWidget));
     }
 

@@ -4,7 +4,7 @@ import me.contaria.standardsettings.mixin.accessors.BakedModelManagerAccessor;
 import me.contaria.standardsettings.options.StandardSetting;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.options.KeyBinding;
+import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.resource.language.LanguageManager;
 import net.minecraft.client.util.Window;
 import org.apache.logging.log4j.LogManager;
@@ -60,12 +60,12 @@ public class StandardSettings {
         LanguageManager languageManager = client.getLanguageManager();
         if (!languageManager.getLanguage().getCode().equals(client.options.language)) {
             languageManager.setLanguage(languageManager.getLanguage(client.options.language));
-            languageManager.apply(client.getResourceManager());
+            languageManager.reload(client.getResourceManager());
         }
 
         BakedModelManagerAccessor bakedModelManager = (BakedModelManagerAccessor) client.getBakedModelManager();
-        if (bakedModelManager.standardsettings$getMipmap() != client.options.mipmapLevels) {
-            client.resetMipmapLevels(client.options.mipmapLevels);
+        if (bakedModelManager.standardsettings$getMipmapLevels() != client.options.mipmapLevels) {
+            client.setMipmapLevels(client.options.mipmapLevels);
             bakedModelManager.standardsettings$apply(bakedModelManager.standardsettings$prepare(client.getResourceManager(), client.getProfiler()), client.getResourceManager(), client.getProfiler());
         }
 
