@@ -2,6 +2,11 @@ package me.contaria.standardsettings;
 
 import com.google.gson.JsonParseException;
 import com.mojang.blaze3d.platform.GlStateManager;
+import me.contaria.speedrunapi.config.SpeedrunConfigAPI;
+import me.contaria.speedrunapi.config.SpeedrunConfigContainer;
+import me.contaria.speedrunapi.config.api.SpeedrunConfig;
+import me.contaria.speedrunapi.config.api.SpeedrunOption;
+import me.contaria.speedrunapi.config.api.annotations.Config;
 import me.contaria.standardsettings.options.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ConfirmScreen;
@@ -25,12 +30,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
-import org.mcsr.speedrunapi.config.SpeedrunConfigAPI;
-import org.mcsr.speedrunapi.config.SpeedrunConfigContainer;
-import org.mcsr.speedrunapi.config.api.SpeedrunConfig;
-import org.mcsr.speedrunapi.config.api.SpeedrunOption;
-import org.mcsr.speedrunapi.config.api.annotations.Config;
-import org.mcsr.speedrunapi.config.api.annotations.InitializeOn;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +42,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
-@InitializeOn(InitializeOn.InitPoint.POSTLAUNCH)
+@Config(init = Config.InitPoint.POSTLAUNCH)
 public class StandardSettingsConfig implements SpeedrunConfig {
     @Config.Ignored
     public final StandardGameOptions options = new StandardGameOptions(MinecraftClient.getInstance(), null);
