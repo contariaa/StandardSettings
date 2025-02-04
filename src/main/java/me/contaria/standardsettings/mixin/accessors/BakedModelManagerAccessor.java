@@ -10,8 +10,8 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(BakedModelManager.class)
 public interface BakedModelManagerAccessor {
-    @Accessor
-    int getMipmap();
+    @Accessor("mipmap")
+    int standardsettings$getMipmap();
 
     @Invoker("prepare")
     ModelLoader standardsettings$prepare(ResourceManager resourceManager, Profiler profiler);

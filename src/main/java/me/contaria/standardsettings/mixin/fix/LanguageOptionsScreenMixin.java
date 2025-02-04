@@ -11,6 +11,7 @@ import net.minecraft.client.resource.language.LanguageDefinition;
 import net.minecraft.client.resource.language.LanguageManager;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(LanguageOptionsScreen.class)
@@ -20,18 +21,41 @@ public abstract class LanguageOptionsScreenMixin extends GameOptionsScreen {
         super(parent, gameOptions, title);
     }
 
-    @WrapWithCondition(method = "method_19821", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;onResolutionChanged()V"))
+    @WrapWithCondition(
+            method = "method_19821",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/MinecraftClient;onResolutionChanged()V"
+            )
+    )
     private boolean doNotReloadResolution(MinecraftClient client) {
-        return !(this.gameOptions instanceof StandardGameOptions);
+        return !this.isStandardSettings();
     }
 
-    @WrapWithCondition(method = "method_19820", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resource/language/LanguageManager;setLanguage(Lnet/minecraft/client/resource/language/LanguageDefinition;)V"))
+    @WrapWithCondition(
+            method = "method_19820",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/resource/language/LanguageManager;setLanguage(Lnet/minecraft/client/resource/language/LanguageDefinition;)V"
+            )
+    )
     private boolean doNotSetLanguage(LanguageManager manager, LanguageDefinition language) {
-        return !(this.gameOptions instanceof StandardGameOptions);
+        return !this.isStandardSettings();
     }
 
-    @WrapWithCondition(method = "method_19820", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;reloadResources()Ljava/util/concurrent/CompletableFuture;"))
+    @WrapWithCondition(
+            method = "method_19820",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/MinecraftClient;reloadResources()Ljava/util/concurrent/CompletableFuture;"
+            )
+    )
     private boolean doNotReloadResources(MinecraftClient client) {
-        return !(this.gameOptions instanceof StandardGameOptions);
+        return !this.isStandardSettings();
+    }
+
+    @Unique
+    private boolean isStandardSettings() {
+        return this.gameOptions instanceof StandardGameOptions;
     }
 }

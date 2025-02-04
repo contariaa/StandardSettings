@@ -64,7 +64,7 @@ public class StandardSettings {
         }
 
         BakedModelManagerAccessor bakedModelManager = (BakedModelManagerAccessor) client.getBakedModelManager();
-        if (bakedModelManager.getMipmap() != client.options.mipmapLevels) {
+        if (bakedModelManager.standardsettings$getMipmap() != client.options.mipmapLevels) {
             client.resetMipmapLevels(client.options.mipmapLevels);
             bakedModelManager.standardsettings$apply(bakedModelManager.standardsettings$prepare(client.getResourceManager(), client.getProfiler()), client.getResourceManager(), client.getProfiler());
         }

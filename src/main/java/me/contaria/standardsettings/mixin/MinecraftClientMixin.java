@@ -30,7 +30,6 @@ import java.util.function.Function;
 
 @Mixin(MinecraftClient.class)
 public abstract class MinecraftClientMixin {
-
     @Shadow
     @Nullable
     private IntegratedServer server;
@@ -41,7 +40,10 @@ public abstract class MinecraftClientMixin {
     @Shadow
     public abstract void openPauseMenu(boolean pause);
 
-    @Inject(method = "createWorld", at = @At("HEAD"))
+    @Inject(
+            method = "createWorld",
+            at = @At("HEAD")
+    )
     private void reset(String worldName, LevelInfo levelInfo, RegistryTracker.Modifiable registryTracker, GeneratorOptions generatorOptions, CallbackInfo ci) {
         if (!MinecraftClient.getInstance().isOnThread()) {
             return;
@@ -52,7 +54,10 @@ public abstract class MinecraftClientMixin {
         }
     }
 
-    @Inject(method = "createWorld", at = @At("TAIL"))
+    @Inject(
+            method = "createWorld",
+            at = @At("TAIL")
+    )
     private void onWorldJoin(String worldName, LevelInfo levelInfo, RegistryTracker.Modifiable registryTracker, GeneratorOptions generatorOptions, CallbackInfo ci) {
         if (!MinecraftClient.getInstance().isOnThread()) {
             return;
@@ -68,42 +73,60 @@ public abstract class MinecraftClientMixin {
         }
     }
 
-    @Inject(method = "onWindowFocusChanged", at = @At("RETURN"))
+    @Inject(
+            method = "onWindowFocusChanged",
+            at = @At("RETURN")
+    )
     private void onWorldJoin_onWindowFocus(boolean focused, CallbackInfo ci) {
         if (StandardSettings.onWorldJoinPending && focused) {
             StandardSettings.onWorldJoin();
         }
     }
 
-    @Inject(method = "onResolutionChanged", at = @At("RETURN"))
+    @Inject(
+            method = "onResolutionChanged",
+            at = @At("RETURN")
+    )
     private void onWorldJoin_onResize(CallbackInfo ci) {
         if (StandardSettings.onWorldJoinPending && StandardSettings.config.triggerOnResize) {
             StandardSettings.onWorldJoin();
         }
     }
 
-    @Inject(method = "startIntegratedServer(Ljava/lang/String;Lnet/minecraft/util/registry/RegistryTracker$Modifiable;Ljava/util/function/Function;Lcom/mojang/datafixers/util/Function4;ZLnet/minecraft/client/MinecraftClient$WorldLoadAction;)V", at = @At("HEAD"))
+    @Inject(
+            method = "startIntegratedServer(Ljava/lang/String;Lnet/minecraft/util/registry/RegistryTracker$Modifiable;Ljava/util/function/Function;Lcom/mojang/datafixers/util/Function4;ZLnet/minecraft/client/MinecraftClient$WorldLoadAction;)V",
+            at = @At("HEAD")
+    )
     private void resetPendingActions(CallbackInfo ci) {
         if (MinecraftClient.getInstance().isOnThread()) {
             StandardSettings.resetPendingActions();
         }
     }
 
-    @Inject(method = "startIntegratedServer(Ljava/lang/String;)V", at = @At("HEAD"))
+    @Inject(
+            method = "startIntegratedServer(Ljava/lang/String;)V",
+            at = @At("HEAD")
+    )
     private void loadCache(String worldName, CallbackInfo ci) {
         if (MinecraftClient.getInstance().isOnThread()) {
             StandardSettings.loadCache(worldName);
         }
     }
 
-    @Inject(method = "startIntegratedServer(Ljava/lang/String;Lnet/minecraft/util/registry/RegistryTracker$Modifiable;Ljava/util/function/Function;Lcom/mojang/datafixers/util/Function4;ZLnet/minecraft/client/MinecraftClient$WorldLoadAction;)V", at = @At("TAIL"))
+    @Inject(
+            method = "startIntegratedServer(Ljava/lang/String;Lnet/minecraft/util/registry/RegistryTracker$Modifiable;Ljava/util/function/Function;Lcom/mojang/datafixers/util/Function4;ZLnet/minecraft/client/MinecraftClient$WorldLoadAction;)V",
+            at = @At("TAIL")
+    )
     private void setLastWorld(String worldName, RegistryTracker.Modifiable registryTracker, Function<LevelStorage.Session, DataPackSettings> function, Function4<LevelStorage.Session, RegistryTracker.Modifiable, ResourceManager, DataPackSettings, SaveProperties> function4, boolean safeMode, @Coerce Object worldLoadAction, CallbackInfo ci) {
         if (MinecraftClient.getInstance().isOnThread()) {
             StandardSettings.lastWorld = worldName;
         }
     }
 
-    @Inject(method = "tick", at = @At("HEAD"))
+    @Inject(
+            method = "tick",
+            at = @At("HEAD")
+    )
     private void autoF3Esc(CallbackInfo ci) {
         StandardSettings.autoF3EscPending &= this.server != null && !this.isWindowFocused();
         if (StandardSettings.autoF3EscPending) {
@@ -115,7 +138,10 @@ public abstract class MinecraftClientMixin {
         }
     }
 
-    @Inject(method = "openScreen", at = @At("TAIL"))
+    @Inject(
+            method = "openScreen",
+            at = @At("TAIL")
+    )
     private void autoF3Esc_onPreview(Screen screen, CallbackInfo ci) {
         if (screen instanceof LevelLoadingScreen && StandardSettings.config.autoF3Esc) {
             Text backToGame = new TranslatableText("menu.returnToGame");

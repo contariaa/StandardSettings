@@ -13,22 +13,21 @@ public abstract class KeyboardMixin {
     @ModifyExpressionValue(
             method = "onKey",
             at = @At(
-                    value = "CONSTANT",
-                    args = "intValue=1",
-                    ordinal = 0
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/options/KeyBinding;matchesKey(II)Z"
             ),
             slice = @Slice(
                     from = @At(
                             value = "FIELD",
-                            target = "Lnet/minecraft/client/MinecraftClient;currentScreen:Lnet/minecraft/client/gui/screen/Screen;",
-                            ordinal = 0
+                            target = "Lnet/minecraft/client/options/GameOptions;keyFullscreen:Lnet/minecraft/client/options/KeyBinding;"
+                    ),
+                    to = @At(
+                            value = "INVOKE",
+                            target = "Lnet/minecraft/client/util/ScreenshotUtils;saveScreenshot(Ljava/io/File;IILnet/minecraft/client/gl/Framebuffer;Ljava/util/function/Consumer;)V"
                     )
             )
     )
-    private int dontToggleFullscreenOrScreenshotWhenFocusingKeyBinding(int one) {
-        if (StandardSettings.config.hasFocusedKeyBinding()) {
-            return Integer.MIN_VALUE;
-        }
-        return one;
+    private boolean dontToggleFullscreenOrScreenshotWhenFocusingKeyBinding(boolean matchesKey) {
+        return matchesKey && !StandardSettings.config.hasFocusedKeyBinding();
     }
 }
