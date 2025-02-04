@@ -2,6 +2,7 @@ package me.contaria.standardsettings.options;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.StandardSettings;
 import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -9,9 +10,7 @@ import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,14 +68,14 @@ public class KeyBindingStandardSetting extends StandardSetting<InputUtil.Key> {
 
     @Override
     public @NotNull Text getName() {
-        return new TranslatableText(this.keyBinding.getTranslationKey());
+        return TextUtil.translatable(this.keyBinding.getTranslationKey());
     }
 
     @Override
     public @NotNull Text getDisplayText() {
         Text text = this.value.getLocalizedText();
         if (StandardSettings.config.isFocusedKeyBinding(this)) {
-            return new LiteralText("> ").append(text).append(" <").formatted(Formatting.YELLOW);
+            return TextUtil.literal("> ").append(text).append(" <").formatted(Formatting.YELLOW);
         } else {
             for (StandardSetting<?> setting : StandardSettings.config.standardSettings) {
                 if (setting != this && setting instanceof KeyBindingStandardSetting && setting.isEnabled() && this.value.equals(((KeyBindingStandardSetting) setting).value)) {

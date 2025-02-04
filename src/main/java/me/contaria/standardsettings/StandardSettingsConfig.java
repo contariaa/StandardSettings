@@ -7,6 +7,7 @@ import me.contaria.speedrunapi.config.SpeedrunConfigContainer;
 import me.contaria.speedrunapi.config.api.SpeedrunConfig;
 import me.contaria.speedrunapi.config.api.SpeedrunOption;
 import me.contaria.speedrunapi.config.api.annotations.Config;
+import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.options.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ConfirmScreen;
@@ -23,9 +24,7 @@ import net.minecraft.client.util.Monitor;
 import net.minecraft.client.util.VideoMode;
 import net.minecraft.client.util.Window;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +87,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("realmsNotifications", "menu.options", Option.REALMS_NOTIFICATIONS);
 
         // Video Settings
-        this.register("fullscreenResolution", "options.video", StandardGameOptions::getFullscreenResolution, StandardGameOptions::setFullscreenResolution, option -> VideoMode.fromString(option.get()).map(mode -> (Text) new LiteralText(mode.toString())).orElse(new TranslatableText("options.fullscreen.current")), option -> {
+        this.register("fullscreenResolution", "options.video", StandardGameOptions::getFullscreenResolution, StandardGameOptions::setFullscreenResolution, option -> VideoMode.fromString(option.get()).map(mode -> TextUtil.literal(mode.toString())).orElse(TextUtil.translatable("options.fullscreen.current")), option -> {
             // see FullScreenOption and VideoOptionsScreen#init
             Window window = MinecraftClient.getInstance().getWindow();
             Monitor monitor = window.getMonitor();
@@ -135,7 +134,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
             }
         });
         this.register("attackIndicator", "options.video", Option.ATTACK_INDICATOR, options -> options.attackIndicator.getId());
-        this.register("gamma", "options.video", new DoubleOption("options.gamma", 0.0, 5.0, 0.0f, options -> options.gamma, (options, value) -> options.gamma = value, (options, option) -> new LiteralText((int) (option.get(options) * 100.0) + "%")));
+        this.register("gamma", "options.video", new DoubleOption("options.gamma", 0.0, 5.0, 0.0f, options -> options.gamma, (options, value) -> options.gamma = value, (options, option) -> TextUtil.literal((int) (option.get(options) * 100.0) + "%")));
         this.register("renderClouds", "options.video", Option.CLOUDS, options -> options.cloudRenderMode.getValue());
         this.register("fullscreen", "options.video", Option.FULLSCREEN);
         this.register("particles", "options.video", Option.PARTICLES, options -> options.particles.getId());
@@ -162,7 +161,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("showSubtitles", "options.sounds", Option.SUBTITLES);
 
         // Language
-        this.register("language", "options.language", options -> options.language, (options, value) -> options.language = value, option -> new LiteralText(MinecraftClient.getInstance().getLanguageManager().getLanguage(option.get()).toString()), option -> new ButtonWidget(0, 0, 120, 20, option.getText(), button -> MinecraftClient.getInstance().openScreen(new LanguageOptionsScreen(MinecraftClient.getInstance().currentScreen, options, MinecraftClient.getInstance().getLanguageManager()))));
+        this.register("language", "options.language", options -> options.language, (options, value) -> options.language = value, option -> TextUtil.literal(MinecraftClient.getInstance().getLanguageManager().getLanguage(option.get()).toString()), option -> new ButtonWidget(0, 0, 120, 20, option.getText(), button -> MinecraftClient.getInstance().openScreen(new LanguageOptionsScreen(MinecraftClient.getInstance().currentScreen, options, MinecraftClient.getInstance().getLanguageManager()))));
         this.register("forceUnicodeFont", "options.language", Option.FORCE_UNICODE_FONT);
 
         // Mouse Settings
@@ -213,7 +212,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("advancedItemTooltips", "f3", new BooleanOption("standardsettings.options.advancedItemTooltips", options -> options.advancedItemTooltips, (options, value) -> options.advancedItemTooltips = value));
         this.register("hitboxes", "f3", new BooleanOption("standardsettings.options.hitboxes", StandardGameOptions::getHitBoxes, StandardGameOptions::setHitBoxes)).disable();
         this.register("chunkborders", "f3", new BooleanOption("standardsettings.options.chunkborders", StandardGameOptions::getChunkBorders, StandardGameOptions::setChunkBorders)).disable();
-        this.register("pieDirectory", "f3", StandardGameOptions::getPieDirectory, StandardGameOptions::setPieDirectory, option -> new LiteralText(option.get()), option -> {
+        this.register("pieDirectory", "f3", StandardGameOptions::getPieDirectory, StandardGameOptions::setPieDirectory, option -> TextUtil.literal(option.get()), option -> {
             TextFieldWidget widget = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, 120, 20, option.getName());
             widget.setMaxLength(128);
             widget.setTextPredicate(string -> string != null && (string.startsWith("root") || string.isEmpty()));
@@ -239,7 +238,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         }).disable();
 
         // More Settings
-        this.register("perspective", "more", new CyclingOption("standardsettings.options.perspective", (options, amount) -> options.perspective = (options.perspective + amount) % 3, (options, option) -> new TranslatableText("standardsettings.options.perspective." + options.perspective)), options -> options.perspective).disable();
+        this.register("perspective", "more", new CyclingOption("standardsettings.options.perspective", (options, amount) -> options.perspective = (options.perspective + amount) % 3, (options, option) -> TextUtil.translatable("standardsettings.options.perspective." + options.perspective)), options -> options.perspective).disable();
         this.register("f1", "more", new BooleanOption("standardsettings.options.f1", options -> options.hudHidden, (options, value) -> options.hudHidden = value)).disable();
         this.register("sneaking", "more", new BooleanOption("standardsettings.options.sneaking", StandardGameOptions::getSneaking, StandardGameOptions::setSneaking)).disable();
         this.register("sprinting", "more", new BooleanOption("standardsettings.options.sprinting", StandardGameOptions::getSprinting, StandardGameOptions::setSprinting)).disable();
@@ -324,10 +323,10 @@ public class StandardSettingsConfig implements SpeedrunConfig {
                     }
                     client.openScreen(screen);
                 },
-                new TranslatableText("speedrunapi.config.standardsettings.option.toggleAll"),
-                new TranslatableText("speedrunapi.config.standardsettings.option.toggleAll.description")
+                TextUtil.translatable("speedrunapi.config.standardsettings.option.toggleAll"),
+                TextUtil.translatable("speedrunapi.config.standardsettings.option.toggleAll.description")
                         .append(" ")
-                        .append(new TranslatableText("speedrunapi.config.standardsettings.option.toggleAll.confirm")),
+                        .append(TextUtil.translatable("speedrunapi.config.standardsettings.option.toggleAll.confirm")),
                 ScreenTexts.PROCEED,
                 ScreenTexts.CANCEL
         ));

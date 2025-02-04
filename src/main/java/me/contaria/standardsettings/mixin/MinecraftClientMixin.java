@@ -1,6 +1,7 @@
 package me.contaria.standardsettings.mixin;
 
 import com.mojang.datafixers.util.Function4;
+import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.StandardSettings;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Element;
@@ -12,7 +13,6 @@ import net.minecraft.resource.DataPackSettings;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.registry.RegistryTracker;
 import net.minecraft.world.SaveProperties;
 import net.minecraft.world.gen.GeneratorOptions;
@@ -144,7 +144,7 @@ public abstract class MinecraftClientMixin {
     )
     private void autoF3Esc_onPreview(Screen screen, CallbackInfo ci) {
         if (screen instanceof LevelLoadingScreen && StandardSettings.config.autoF3Esc) {
-            Text backToGame = new TranslatableText("menu.returnToGame");
+            Text backToGame = TextUtil.translatable("menu.returnToGame");
             for (Element e : screen.children()) {
                 if (!(e instanceof ButtonWidget)) {
                     continue;

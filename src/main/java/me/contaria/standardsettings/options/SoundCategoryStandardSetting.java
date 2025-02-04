@@ -2,15 +2,14 @@ package me.contaria.standardsettings.options;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.StandardGameOptions;
 import net.minecraft.client.gui.screen.ScreenTexts;
 import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import net.minecraft.client.gui.widget.OptionSliderWidget;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +45,7 @@ public class SoundCategoryStandardSetting extends StandardSetting<Float> {
 
     @Override
     public @NotNull Text getName() {
-        return new TranslatableText("soundCategory." + this.soundCategory.getName());
+        return TextUtil.translatable("soundCategory." + this.soundCategory.getName());
     }
 
     @Override
@@ -56,7 +55,7 @@ public class SoundCategoryStandardSetting extends StandardSetting<Float> {
         if (value == 0) {
             return ScreenTexts.OFF;
         }
-        return new LiteralText((int) (value * 100.0) + "%");
+        return TextUtil.literal((int) (value * 100.0) + "%");
     }
 
     @Override

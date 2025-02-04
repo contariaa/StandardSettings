@@ -2,6 +2,7 @@ package me.contaria.standardsettings.options;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.StandardGameOptions;
 import me.contaria.standardsettings.mixin.accessors.BooleanOptionAccessor;
 import me.contaria.standardsettings.mixin.accessors.OptionAccessor;
@@ -10,7 +11,6 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.options.BooleanOption;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +46,7 @@ public class BooleanOptionStandardSetting extends StandardSetting<Boolean> {
 
     @Override
     public @NotNull Text getName() {
-        return new TranslatableText(((OptionAccessor) this.option).standardsettings$getKey());
+        return TextUtil.translatable(((OptionAccessor) this.option).standardsettings$getKey());
     }
 
     @Override

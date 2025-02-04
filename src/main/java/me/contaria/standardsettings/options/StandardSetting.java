@@ -4,12 +4,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import me.contaria.speedrunapi.config.api.SpeedrunOption;
+import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.StandardGameOptions;
 import me.contaria.standardsettings.gui.StandardOptionWidget;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import net.minecraft.client.options.GameOptions;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +86,7 @@ public abstract class StandardSetting<T> implements SpeedrunOption<T> {
     @Override
     public final @NotNull Text getText() {
         if (!this.isEnabled()) {
-            return new LiteralText("-");
+            return TextUtil.literal("-");
         }
         return this.getDisplayText();
     }
@@ -162,7 +162,7 @@ public abstract class StandardSetting<T> implements SpeedrunOption<T> {
         List<Text> textSiblings = text.getSiblings();
 
         if (prefixSiblings.size() >= textSiblings.size()) {
-            return new LiteralText("");
+            return TextUtil.empty();
         }
 
         List<Text> restText = textSiblings.subList(prefixSiblings.size(), textSiblings.size());
