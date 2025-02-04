@@ -13,6 +13,8 @@ import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+
 public class DoubleOptionStandardSetting extends StandardSetting<Double> {
     private final DoubleOption option;
 
@@ -55,7 +57,7 @@ public class DoubleOptionStandardSetting extends StandardSetting<Double> {
 
     @Override
     public @NotNull ClickableWidget createMainWidget() {
-        return new DoubleOptionSliderWidget(this.options, 0, 0, 120, 20, this.option) {
+        return new DoubleOptionSliderWidget(this.options, 0, 0, 120, 20, this.option, Collections.emptyList()) {
             @Override
             protected void updateMessage() {
                 this.setMessage(DoubleOptionStandardSetting.this.getText());

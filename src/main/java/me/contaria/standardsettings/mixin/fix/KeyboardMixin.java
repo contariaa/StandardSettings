@@ -23,7 +23,7 @@ public abstract class KeyboardMixin {
                     ),
                     to = @At(
                             value = "INVOKE",
-                            target = "Lnet/minecraft/client/util/ScreenshotUtils;saveScreenshot(Ljava/io/File;IILnet/minecraft/client/gl/Framebuffer;Ljava/util/function/Consumer;)V"
+                            target = "Lnet/minecraft/client/util/ScreenshotRecorder;saveScreenshot(Ljava/io/File;Lnet/minecraft/client/gl/Framebuffer;Ljava/util/function/Consumer;)V"
                     )
             )
     )

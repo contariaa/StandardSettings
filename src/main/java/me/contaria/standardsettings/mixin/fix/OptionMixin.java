@@ -20,8 +20,8 @@ public abstract class OptionMixin {
     @WrapWithCondition(
             method = {
                     "method_18592", // BIOME_BLEND_RADIUS
-                    "method_18572", // AO
-                    "method_18554"  // GRAPHICS
+                    "method_32549", // AO
+                    "method_32552"  // GRAPHICS
             },
             at = @At(
                     value = "INVOKE",
@@ -73,7 +73,7 @@ public abstract class OptionMixin {
     }
 
     @WrapWithCondition(
-            method = "method_18536", // NARRATOR
+            method = "method_32553", // NARRATOR
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/util/NarratorManager;addToast(Lnet/minecraft/client/option/NarratorMode;)V"
@@ -103,7 +103,7 @@ public abstract class OptionMixin {
     }
 
     @ModifyExpressionValue(
-            method = "method_18554", // GRAPHICS
+            method = "method_32552", // GRAPHICS
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/resource/VideoWarningManager;canWarn()Z"

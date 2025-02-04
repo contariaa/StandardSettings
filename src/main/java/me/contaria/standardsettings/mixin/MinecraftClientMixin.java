@@ -139,7 +139,7 @@ public abstract class MinecraftClientMixin {
     }
 
     @Inject(
-            method = "openScreen",
+            method = "setScreen",
             at = @At("TAIL")
     )
     private void autoF3Esc_onPreview(Screen screen, CallbackInfo ci) {

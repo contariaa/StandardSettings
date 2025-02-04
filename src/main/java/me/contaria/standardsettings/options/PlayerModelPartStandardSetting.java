@@ -24,12 +24,12 @@ public class PlayerModelPartStandardSetting extends StandardSetting<Boolean> {
 
     @Override
     public Boolean get(GameOptions options) {
-        return options.getEnabledPlayerModelParts().contains(this.playerModelPart);
+        return options.isPlayerModelPartEnabled(this.playerModelPart);
     }
 
     @Override
     public void set(GameOptions options, Boolean value) {
-        options.setPlayerModelPart(this.playerModelPart, value);
+        options.togglePlayerModelPart(this.playerModelPart, value);
     }
 
     @Override
@@ -49,13 +49,13 @@ public class PlayerModelPartStandardSetting extends StandardSetting<Boolean> {
 
     @Override
     public @NotNull Text getDisplayText() {
-        return ScreenTexts.getToggleText(this.get());
+        return ScreenTexts.onOrOff(this.get());
     }
 
     @Override
     public @NotNull ClickableWidget createMainWidget() {
         return new ButtonWidget(0, 0, 120, 20, this.getText(), button -> {
-            this.options.togglePlayerModelPart(this.playerModelPart);
+            this.options.togglePlayerModelPart(this.playerModelPart, this.options.isPlayerModelPartEnabled(this.playerModelPart));
             button.setMessage(this.getText());
         });
     }

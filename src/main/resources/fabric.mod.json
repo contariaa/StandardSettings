@@ -26,9 +26,10 @@
 	"mixins": [
 		"standardsettings.mixins.json"
 	],
+	"accessWidener": "standardsettings.accesswidener",
 	"depends": {
 		"fabricloader": ">=0.16.0",
-		"minecraft": "1.16.5",
+		"minecraft": "1.17.1",
 		"speedrunapi": ">=2.0-beta.1"
 	},
 	"breaks": {

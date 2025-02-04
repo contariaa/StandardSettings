@@ -22,17 +22,6 @@ public abstract class LanguageOptionsScreenMixin extends GameOptionsScreen {
     }
 
     @WrapWithCondition(
-            method = "method_19821",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/MinecraftClient;onResolutionChanged()V"
-            )
-    )
-    private boolean doNotReloadResolution(MinecraftClient client) {
-        return !this.isStandardSettings();
-    }
-
-    @WrapWithCondition(
             method = "method_19820",
             at = @At(
                     value = "INVOKE",

@@ -3,20 +3,20 @@ package me.contaria.standardsettings.options;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import me.contaria.standardsettings.StandardGameOptions;
-import me.contaria.standardsettings.mixin.accessors.BooleanOptionAccessor;
+import me.contaria.standardsettings.mixin.accessors.CyclingButtonWidget$BuilderAccessor;
+import me.contaria.standardsettings.mixin.accessors.CyclingOptionAccessor;
 import me.contaria.standardsettings.mixin.accessors.OptionAccessor;
-import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.option.BooleanOption;
+import net.minecraft.client.option.CyclingOption;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BooleanOptionStandardSetting extends StandardSetting<Boolean> {
-    private final BooleanOption option;
+    private final CyclingOption<Boolean> option;
 
-    public BooleanOptionStandardSetting(String id, @Nullable String category, StandardGameOptions options, BooleanOption option) {
+    public BooleanOptionStandardSetting(String id, @Nullable String category, StandardGameOptions options, CyclingOption<Boolean> option) {
         super(id, category, options);
         this.option = option;
 
@@ -25,12 +25,12 @@ public class BooleanOptionStandardSetting extends StandardSetting<Boolean> {
 
     @Override
     protected Boolean get(GameOptions options) {
-        return this.option.get(options);
+        return (Boolean) ((CyclingOptionAccessor) this.option).standardsettings$getGetter().apply(options);
     }
 
     @Override
     protected void set(GameOptions options, Boolean value) {
-        ((BooleanOptionAccessor) this.option).standardsettings$set(options, value);
+        ((CyclingOptionAccessor) this.option).standardsettings$getSetter().accept(options, this.option, value);
     }
 
     @Override
@@ -50,14 +50,14 @@ public class BooleanOptionStandardSetting extends StandardSetting<Boolean> {
 
     @Override
     public @NotNull Text getDisplayText() {
-        return StandardSetting.getTextWithoutPrefix(this.option.getDisplayString(this.options), ((OptionAccessor) this.option).standardsettings$getDisplayPrefix());
+        return ((CyclingButtonWidget$BuilderAccessor) ((CyclingOptionAccessor) this.option).standardsettings$getButtonBuilderFactory().get()).standardsettings$getValueToText().apply(this.get());
     }
 
     @Override
     public @NotNull ClickableWidget createMainWidget() {
-        return new ButtonWidget(0, 0, 120, 20, this.getText(), button -> {
-            this.set(!this.get());
-            button.setMessage(this.getText());
-        });
+        return ((CyclingOptionAccessor) this.option).standardsettings$getButtonBuilderFactory().get()
+                .omitKeyText()
+                .initially(this.get())
+                .build(0, 0, 120, 20, this.getName(), (button, value) -> this.set((Boolean) value));
     }
 }

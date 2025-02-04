@@ -4,6 +4,7 @@ import me.contaria.standardsettings.options.StandardSetting;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.ParentElement;
 import net.minecraft.client.gui.screen.ScreenTexts;
+import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StandardOptionWidget extends ClickableWidget implements ParentElement {
+    private final StandardSetting<?> setting;
     private final ClickableWidget mainWidget;
     private final ClickableWidget toggle;
     private Element focused;
@@ -22,11 +24,11 @@ public class StandardOptionWidget extends ClickableWidget implements ParentEleme
     public StandardOptionWidget(StandardSetting<?> setting, ClickableWidget mainWidget) {
         super(mainWidget.x, mainWidget.y, mainWidget.getWidth() + 30, mainWidget.getHeight(), mainWidget.getMessage());
 
+        this.setting = setting;
         this.mainWidget = mainWidget;
-        this.toggle = new ButtonWidget(mainWidget.getWidth() + 5, 0, 25, 20, ScreenTexts.getToggleText(setting.isEnabled()), button -> {
-            boolean enabled = setting.toggleEnabled();
-            button.setMessage(ScreenTexts.getToggleText(enabled));
-            this.mainWidget.setMessage(setting.getText());
+        this.toggle = new ButtonWidget(mainWidget.getWidth() + 5, 0, 25, 20, ScreenTexts.onOrOff(setting.isEnabled()), button -> {
+            boolean enabled = this.setting.toggleEnabled();
+            button.setMessage(ScreenTexts.onOrOff(enabled));
             this.setEnabled(enabled);
         });
         this.setEnabled(setting.isEnabled());
@@ -38,6 +40,7 @@ public class StandardOptionWidget extends ClickableWidget implements ParentEleme
             ((TextFieldWidget) this.mainWidget).setEditable(enabled);
             ((TextFieldWidget) this.mainWidget).setFocusUnlocked(enabled);
         }
+        this.mainWidget.setMessage(this.setting.getText());
     }
 
     @Override
@@ -92,5 +95,9 @@ public class StandardOptionWidget extends ClickableWidget implements ParentEleme
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
         return ParentElement.super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    }
+
+    @Override
+    public void appendNarrations(NarrationMessageBuilder builder) {
     }
 }

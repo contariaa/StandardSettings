@@ -13,42 +13,42 @@ import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CyclingOptionStandardSetting<T> extends StandardSetting<T> {
+public class EnumOptionStandardSetting<T extends Enum<T>> extends StandardSetting<T> {
     private final CyclingOption<T> option;
+    private final Class<T> enumClass;
 
-    public CyclingOptionStandardSetting(String id, @Nullable String category, StandardGameOptions options, CyclingOption<T> option) {
+    public EnumOptionStandardSetting(String id, @Nullable String category, StandardGameOptions options, CyclingOption<T> option, Class<T> enumClass) {
         super(id, category, options);
         this.option = option;
+        this.enumClass = enumClass;
 
         this.set(this.getOption());
     }
 
     @Override
-    public T get(GameOptions options) {
+    protected T get(GameOptions options) {
         return (T) ((CyclingOptionAccessor) this.option).standardsettings$getGetter().apply(options);
     }
 
     @Override
-    public void set(GameOptions options, T value) {
+    protected void set(GameOptions options, T value) {
         ((CyclingOptionAccessor) this.option).standardsettings$getSetter().accept(options, this.option, value);
     }
 
     @Override
     protected void valueFromJson(JsonElement jsonElement) {
-        this.set(this.fromInt(jsonElement.getAsInt()));
+        String jsonString = jsonElement.getAsString();
+        for (T enumConstant : this.enumClass.getEnumConstants()) {
+            if (enumConstant.name().equals(jsonString)) {
+                this.set(enumConstant);
+                break;
+            }
+        }
     }
 
     @Override
     protected JsonElement valueToJson() {
-        return new JsonPrimitive(this.toInt(this.get()));
-    }
-
-    protected T fromInt(int i) {
-        return (T) ((CyclingButtonWidget$BuilderAccessor) ((CyclingOptionAccessor) this.option).standardsettings$getButtonBuilderFactory().get()).standardsettings$getValues().getDefaults().get(i);
-    }
-
-    protected int toInt(T value) {
-        return ((CyclingButtonWidget$BuilderAccessor) ((CyclingOptionAccessor) this.option).standardsettings$getButtonBuilderFactory().get()).standardsettings$getValues().getDefaults().indexOf(value);
+        return new JsonPrimitive(this.get().name());
     }
 
     @Override

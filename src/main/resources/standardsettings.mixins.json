@@ -5,20 +5,19 @@
   "client": [
     "MinecraftClientMixin",
     "accessors.BakedModelManagerAccessor",
-    "accessors.BooleanOptionAccessor",
+    "accessors.CyclingButtonWidget$BuilderAccessor",
+    "accessors.CyclingOptionAccessor",
     "accessors.DoubleOptionAccessor",
+    "accessors.GameOptionsScreenAccessor",
     "accessors.MinecraftClientAccessor",
     "accessors.OptionAccessor",
     "fix.GameOptionsMixin",
     "fix.KeyboardMixin",
     "fix.LanguageOptionsScreenMixin",
+    "fix.LanguageSelectionListWidgetMixin",
     "fix.OptionMixin"
   ],
   "injectors": {
     "defaultRequire": 1
-  },
-  "mixins": [
-    "accessors.GameOptionsScreenAccessor",
-    "fix.LanguageSelectionListWidgetMixin"
-  ]
+  }
 }
