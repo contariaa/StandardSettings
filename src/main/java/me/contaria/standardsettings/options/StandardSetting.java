@@ -10,12 +10,10 @@ import me.contaria.standardsettings.gui.StandardOptionWidget;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.option.GameOptions;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public abstract class StandardSetting<T> implements SpeedrunOption<T> {
     private final String id;
@@ -154,23 +152,17 @@ public abstract class StandardSetting<T> implements SpeedrunOption<T> {
     }
 
     protected static Text getTextWithoutPrefix(Text text, Text prefix) {
-        if (!text.copy().equals(prefix.copy())) {
+        if (!(text instanceof TranslatableText)) {
             return text;
         }
-
-        List<Text> prefixSiblings = prefix.getSiblings();
-        List<Text> textSiblings = text.getSiblings();
-
-        if (prefixSiblings.size() >= textSiblings.size()) {
-            return TextUtil.empty();
+        Object[] args = ((TranslatableText) text).getArgs();
+        if (args.length != 2 || !prefix.equals(args[0])) {
+            return text;
         }
-
-        List<Text> restText = textSiblings.subList(prefixSiblings.size(), textSiblings.size());
-
-        MutableText newText = restText.remove(0).shallowCopy();
-        for (Text t : restText) {
-            newText.append(t);
+        Object value = args[1];
+        if (value instanceof Text) {
+            return (Text) value;
         }
-        return newText;
+        return TextUtil.literal(String.valueOf(value));
     }
 }
