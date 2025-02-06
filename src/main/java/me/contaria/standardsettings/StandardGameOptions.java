@@ -105,14 +105,14 @@ public class StandardGameOptions extends GameOptions {
         if (options instanceof StandardGameOptions) {
             return ((StandardGameOptions) options).sneaking;
         }
-        return options.keySneak.isPressed();
+        return options.sneakKey.isPressed();
     }
 
     public static void setSneaking(GameOptions options, boolean value) {
         if (options instanceof StandardGameOptions) {
             ((StandardGameOptions) options).sneaking = value;
-        } else if (options.sneakToggled && options.keySneak.isPressed() != value) {
-            options.keySneak.setPressed(true);
+        } else if (options.sneakToggled && options.sneakKey.isPressed() != value) {
+            options.sneakKey.setPressed(true);
         }
     }
 
@@ -120,14 +120,14 @@ public class StandardGameOptions extends GameOptions {
         if (options instanceof StandardGameOptions) {
             return ((StandardGameOptions) options).sprinting;
         }
-        return options.keySprint.isPressed();
+        return options.sprintKey.isPressed();
     }
 
     public static void setSprinting(GameOptions options, boolean value) {
         if (options instanceof StandardGameOptions) {
             ((StandardGameOptions) options).sprinting = value;
-        } else if (options.sprintToggled && options.keySprint.isPressed() != value) {
-            options.keySprint.setPressed(true);
+        } else if (options.sprintToggled && options.sprintKey.isPressed() != value) {
+            options.sprintKey.setPressed(true);
         }
     }
 

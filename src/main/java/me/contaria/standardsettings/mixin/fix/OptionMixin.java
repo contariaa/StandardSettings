@@ -9,6 +9,8 @@ import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.option.NarratorMode;
 import net.minecraft.client.option.Option;
 import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.sound.SoundInstance;
+import net.minecraft.client.sound.SoundManager;
 import net.minecraft.client.util.NarratorManager;
 import net.minecraft.client.util.Window;
 import org.spongepowered.asm.mixin.Mixin;
@@ -111,5 +113,27 @@ public abstract class OptionMixin {
     )
     private static boolean doNotWarnAboutFabulousGraphics(boolean original, @Local(argsOnly = true) GameOptions options) {
         return original && !(options instanceof StandardGameOptions);
+    }
+
+    @WrapWithCondition(
+            method = "method_38516",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/sound/SoundManager;reloadSounds()V"
+            )
+    )
+    private static boolean doNotReloadSoundManager(SoundManager manager, @Local(argsOnly = true) GameOptions options) {
+        return !(options instanceof StandardGameOptions);
+    }
+
+    @WrapWithCondition(
+            method = "method_38516",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/sound/SoundManager;play(Lnet/minecraft/client/sound/SoundInstance;)V"
+            )
+    )
+    private static boolean doNotReloadSoundManager(SoundManager instance, SoundInstance sound, @Local(argsOnly = true) GameOptions options) {
+        return !(options instanceof StandardGameOptions);
     }
 }

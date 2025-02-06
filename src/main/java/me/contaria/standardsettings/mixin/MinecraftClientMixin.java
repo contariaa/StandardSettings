@@ -1,6 +1,5 @@
 package me.contaria.standardsettings.mixin;
 
-import com.mojang.datafixers.util.Function4;
 import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.StandardSettings;
 import net.minecraft.client.MinecraftClient;
@@ -9,12 +8,10 @@ import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.LevelLoadingScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.resource.DataPackSettings;
-import net.minecraft.resource.ResourceManager;
+import net.minecraft.server.SaveLoader;
 import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.text.Text;
 import net.minecraft.util.registry.DynamicRegistryManager;
-import net.minecraft.world.SaveProperties;
 import net.minecraft.world.gen.GeneratorOptions;
 import net.minecraft.world.level.LevelInfo;
 import net.minecraft.world.level.storage.LevelStorage;
@@ -44,7 +41,7 @@ public abstract class MinecraftClientMixin {
             method = "createWorld",
             at = @At("HEAD")
     )
-    private void reset(String worldName, LevelInfo levelInfo, DynamicRegistryManager.Impl registryTracker, GeneratorOptions generatorOptions, CallbackInfo ci) {
+    private void reset(String worldName, LevelInfo levelInfo, DynamicRegistryManager dynamicRegistryManager, GeneratorOptions generatorOptions, CallbackInfo ci) {
         if (!MinecraftClient.getInstance().isOnThread()) {
             return;
         }
@@ -58,7 +55,7 @@ public abstract class MinecraftClientMixin {
             method = "createWorld",
             at = @At("TAIL")
     )
-    private void onWorldJoin(String worldName, LevelInfo levelInfo, DynamicRegistryManager.Impl registryTracker, GeneratorOptions generatorOptions, CallbackInfo ci) {
+    private void onWorldJoin(String worldName, LevelInfo levelInfo, DynamicRegistryManager dynamicRegistryManager, GeneratorOptions generatorOptions, CallbackInfo ci) {
         if (!MinecraftClient.getInstance().isOnThread()) {
             return;
         }
@@ -94,7 +91,7 @@ public abstract class MinecraftClientMixin {
     }
 
     @Inject(
-            method = "startIntegratedServer(Ljava/lang/String;Lnet/minecraft/util/registry/DynamicRegistryManager$Impl;Ljava/util/function/Function;Lcom/mojang/datafixers/util/Function4;ZLnet/minecraft/client/MinecraftClient$WorldLoadAction;)V",
+            method = "startIntegratedServer(Ljava/lang/String;Ljava/util/function/Function;Ljava/util/function/Function;ZLnet/minecraft/client/MinecraftClient$WorldLoadAction;)V",
             at = @At("HEAD")
     )
     private void resetPendingActions(CallbackInfo ci) {
@@ -114,10 +111,10 @@ public abstract class MinecraftClientMixin {
     }
 
     @Inject(
-            method = "startIntegratedServer(Ljava/lang/String;Lnet/minecraft/util/registry/DynamicRegistryManager$Impl;Ljava/util/function/Function;Lcom/mojang/datafixers/util/Function4;ZLnet/minecraft/client/MinecraftClient$WorldLoadAction;)V",
+            method = "startIntegratedServer(Ljava/lang/String;Ljava/util/function/Function;Ljava/util/function/Function;ZLnet/minecraft/client/MinecraftClient$WorldLoadAction;)V",
             at = @At("TAIL")
     )
-    private void setLastWorld(String worldName, DynamicRegistryManager.Impl registryTracker, Function<LevelStorage.Session, DataPackSettings> dataPackSettingsGetter, Function4<LevelStorage.Session, DynamicRegistryManager.Impl, ResourceManager, DataPackSettings, SaveProperties> savePropertiesGetter, boolean safeMode, @Coerce Object worldLoadAction, CallbackInfo ci) {
+    private void setLastWorld(String worldName, Function<LevelStorage.Session, SaveLoader.DataPackSettingsSupplier> dataPackSettingsSupplierGetter, Function<LevelStorage.Session, SaveLoader.SavePropertiesSupplier> savePropertiesSupplierGetter, boolean safeMode, @Coerce Object worldLoadAction, CallbackInfo ci) {
         if (MinecraftClient.getInstance().isOnThread()) {
             StandardSettings.lastWorld = worldName;
         }
@@ -146,10 +143,9 @@ public abstract class MinecraftClientMixin {
         if (screen instanceof LevelLoadingScreen && StandardSettings.config.autoF3Esc) {
             Text backToGame = TextUtil.translatable("menu.returnToGame");
             for (Element e : screen.children()) {
-                if (!(e instanceof ButtonWidget)) {
+                if (!(e instanceof ButtonWidget button)) {
                     continue;
                 }
-                ButtonWidget button = (ButtonWidget) e;
                 if (backToGame.equals(button.getMessage())) {
                     button.onPress();
                     break;

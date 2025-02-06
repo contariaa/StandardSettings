@@ -19,7 +19,7 @@ public abstract class KeyboardMixin {
             slice = @Slice(
                     from = @At(
                             value = "FIELD",
-                            target = "Lnet/minecraft/client/option/GameOptions;keyFullscreen:Lnet/minecraft/client/option/KeyBinding;"
+                            target = "Lnet/minecraft/client/option/GameOptions;fullscreenKey:Lnet/minecraft/client/option/KeyBinding;"
                     ),
                     to = @At(
                             value = "INVOKE",

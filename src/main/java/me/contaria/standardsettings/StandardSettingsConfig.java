@@ -7,6 +7,9 @@ import me.contaria.speedrunapi.config.api.SpeedrunConfig;
 import me.contaria.speedrunapi.config.api.SpeedrunOption;
 import me.contaria.speedrunapi.config.api.annotations.Config;
 import me.contaria.speedrunapi.util.TextUtil;
+import me.contaria.standardsettings.mixin.accessors.CyclingButtonWidget$BuilderAccessor;
+import me.contaria.standardsettings.mixin.accessors.CyclingOptionAccessor;
+import me.contaria.standardsettings.mixin.accessors.OptionAccessor;
 import me.contaria.standardsettings.options.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ConfirmScreen;
@@ -83,7 +86,10 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         StandardSettings.config = this;
 
         this.register("fov", "menu.options", Option.FOV);
+
+        // Online Options
         this.registerBoolean("realmsNotifications", "menu.options", Option.REALMS_NOTIFICATIONS);
+        this.registerBoolean("allowServerListing", "options.online", Option.ALLOW_SERVER_LISTING);
 
         // Video Settings
         this.register("fullscreenResolution", "options.video", StandardGameOptions::getFullscreenResolution, StandardGameOptions::setFullscreenResolution, option -> VideoMode.fromString(option.get()).map(mode -> TextUtil.literal(mode.toString())).orElse(TextUtil.translatable("options.fullscreen.current")), option -> {
@@ -122,6 +128,8 @@ public class StandardSettingsConfig implements SpeedrunConfig {
             }
         });
         this.register("renderDistance", "options.video", Option.RENDER_DISTANCE);
+        this.register("prioritizeChunkUpdates", "options.video", Option.CHUNK_BUILDER_MODE);
+        this.register("simulationDistance", "options.video", Option.SIMULATION_DISTANCE);
         this.registerEnum("ao", "options.video", Option.AO, AoMode.class);
         this.register("maxFps", "options.video", Option.FRAMERATE_LIMIT);
         this.registerBoolean("enableVsync", "options.video", Option.VSYNC);
@@ -152,6 +160,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("screenEffectScale", "options.video", Option.DISTORTION_EFFECT_SCALE);
         this.register("entityDistanceScaling", "options.video", Option.ENTITY_DISTANCE_SCALING);
         this.register("fovEffectScale", "options.video", Option.FOV_EFFECT_SCALE);
+        this.registerBoolean("showAutosaveIndicator", "options.video", Option.SHOW_AUTOSAVE_INDICATOR);
         this.register(new BooleanOptionStandardSetting("entityCulling", "options.video", this.options, CyclingOption.create("standardsettings.options.entityCulling", StandardGameOptions::getEntityCulling, (options, option, value) -> StandardGameOptions.setEntityCulling(options, value))) {
             @Override
             public boolean hasWidget() {
@@ -170,6 +179,20 @@ public class StandardSettingsConfig implements SpeedrunConfig {
             this.register(new SoundCategoryStandardSetting("soundCategory_" + soundCategory.getName(), "options.sounds", this.options, soundCategory));
         }
         this.registerBoolean("showSubtitles", "options.sounds", Option.SUBTITLES);
+        this.register(new StringOptionStandardSetting("soundDevice", "options.sounds", this.options,
+                options -> (String) ((CyclingOptionAccessor) Option.AUDIO_DEVICE).standardsettings$getGetter().apply(options),
+                (options, value) -> ((CyclingOptionAccessor) Option.AUDIO_DEVICE).standardsettings$getSetter().accept(options, Option.AUDIO_DEVICE, value),
+                setting -> ((CyclingButtonWidget$BuilderAccessor) ((CyclingOptionAccessor) Option.AUDIO_DEVICE).standardsettings$getButtonBuilderFactory().get()).standardsettings$getValueToText().apply(setting.get()),
+                setting -> ((CyclingOptionAccessor) Option.AUDIO_DEVICE).standardsettings$getButtonBuilderFactory().get()
+                        .omitKeyText()
+                        .initially(setting.get())
+                        .build(0, 0, 120, 20, setting.getName(), (button, value) -> setting.set((String) value))
+        ) {
+            @Override
+            public @NotNull Text getName() {
+                return ((OptionAccessor) Option.AUDIO_DEVICE).standardsettings$getDisplayPrefix();
+            }
+        });
 
         // Language
         this.register("language", "options.language", options -> options.language, (options, value) -> options.language = value, option -> TextUtil.literal(MinecraftClient.getInstance().getLanguageManager().getLanguage(option.get()).toString()), option -> new ButtonWidget(0, 0, 120, 20, option.getText(), button -> MinecraftClient.getInstance().setScreen(new LanguageOptionsScreen(MinecraftClient.getInstance().currentScreen, options, MinecraftClient.getInstance().getLanguageManager()))));
@@ -190,7 +213,9 @@ public class StandardSettingsConfig implements SpeedrunConfig {
 
         // Controls
         this.registerBoolean("autoJump", "options.controls", Option.AUTO_JUMP);
-        KeyBinding[] keyBindings = ArrayUtils.clone(MinecraftClient.getInstance().options.keysAll);
+        this.registerBoolean("toggleCrouch", "options.controls", Option.SNEAK_TOGGLED);
+        this.registerBoolean("toggleSprint", "options.controls", Option.SPRINT_TOGGLED);
+        KeyBinding[] keyBindings = ArrayUtils.clone(MinecraftClient.getInstance().options.allKeys);
         Arrays.sort(keyBindings);
         for (KeyBinding keyBinding : keyBindings) {
             this.register(new KeyBindingStandardSetting("key_" + keyBinding.getTranslationKey(), keyBinding.getCategory(), keyBinding));
@@ -223,9 +248,8 @@ public class StandardSettingsConfig implements SpeedrunConfig {
 
         // Accessibility Settings
         this.registerBoolean("backgroundForChatOnly", "options.accessibility.title", Option.TEXT_BACKGROUND);
-        this.registerBoolean("toggleCrouch", "options.accessibility.title", Option.SNEAK_TOGGLED);
-        this.registerBoolean("toggleSprint", "options.accessibility.title", Option.SPRINT_TOGGLED);
         this.registerBoolean("darkMojangStudiosBackground", "options.accessibility.title", Option.MONOCHROME_LOGO);
+        this.registerBoolean("hideLightningFlashes", "options.accessibility.title", Option.HIDE_LIGHTNING_FLASHES);
 
         // F3 Settings
         this.registerBoolean("pauseOnLostFocus", "f3", CyclingOption.create("standardsettings.options.pauseOnLostFocus", options -> options.pauseOnLostFocus, (options, option, value) -> options.pauseOnLostFocus = value));
