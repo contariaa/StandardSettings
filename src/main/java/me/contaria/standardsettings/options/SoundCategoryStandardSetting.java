@@ -2,14 +2,12 @@ package me.contaria.standardsettings.options;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.StandardGameOptions;
-import net.minecraft.client.gui.screen.ScreenTexts;
 import net.minecraft.client.gui.widget.AbstractButtonWidget;
-import net.minecraft.client.gui.widget.OptionSliderWidget;
+import net.minecraft.client.gui.widget.SliderWidget;
 import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.resource.language.I18n;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,28 +42,24 @@ public class SoundCategoryStandardSetting extends StandardSetting<Float> {
     }
 
     @Override
-    public @NotNull Text getName() {
-        return TextUtil.translatable("soundCategory." + this.soundCategory.getName());
+    public @NotNull String getName() {
+        return I18n.translate("soundCategory." + this.soundCategory.getName());
     }
 
     @Override
-    public @NotNull Text getDisplayText() {
+    public @NotNull String getDisplayText() {
         // see SoundSliderWidget#updateMessage
         float value = this.get();
         if (value == 0) {
-            return ScreenTexts.OFF;
+            return I18n.translate("options.off");
         }
-        return TextUtil.literal((int) (value * 100.0) + "%");
+        return (int) (value * 100.0) + "%";
     }
 
     @Override
     public @NotNull AbstractButtonWidget createMainWidget() {
         // see SoundSliderWidget
-        return new OptionSliderWidget(this.options, 0, 0, 120, 20, this.get()) {
-            {
-                this.updateMessage();
-            }
-
+        return new SliderWidget(0, 0, 120, 20, this.get()) {
             @Override
             protected void updateMessage() {
                 this.setMessage(SoundCategoryStandardSetting.this.getText());

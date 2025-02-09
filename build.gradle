@@ -19,15 +19,15 @@ repositories {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "dev.tildejustin:yarn:${project.yarn_mappings}:v2"
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// SpeedrunAPI
 	// check for the latest versions at https://jitpack.io/#kingcontaria/speedrunapi
-	modImplementation "com.github.KingContaria:SpeedrunAPI:8497ae7479"
+	modImplementation "com.github.KingContaria:SpeedrunAPI:a44e74c5fd"
 
 	// check for the latest versions at https://jitpack.io/#Minecraft-Java-Edition-Speedrunning/sodium
-	modCompileOnly "com.github.Minecraft-Java-Edition-Speedrunning:sodium:7e4905f134"
+	modCompileOnly "com.github.Minecraft-Java-Edition-Speedrunning:sodium:b1f819451e"
 }
 
 processResources {

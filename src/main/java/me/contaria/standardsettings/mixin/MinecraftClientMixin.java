@@ -1,7 +1,8 @@
 package me.contaria.standardsettings.mixin;
 
-import com.mojang.datafixers.util.Function4;
-import me.contaria.speedrunapi.util.TextUtil;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.sugar.Share;
+import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
 import me.contaria.standardsettings.StandardSettings;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Element;
@@ -9,24 +10,16 @@ import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.LevelLoadingScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.resource.DataPackSettings;
-import net.minecraft.resource.ResourceManager;
+import net.minecraft.client.resource.language.I18n;
 import net.minecraft.server.integrated.IntegratedServer;
-import net.minecraft.text.Text;
-import net.minecraft.util.registry.RegistryTracker;
-import net.minecraft.world.SaveProperties;
-import net.minecraft.world.gen.GeneratorOptions;
 import net.minecraft.world.level.LevelInfo;
-import net.minecraft.world.level.storage.LevelStorage;
+import net.minecraft.world.level.LevelProperties;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.function.Function;
 
 @Mixin(MinecraftClient.class)
 public abstract class MinecraftClientMixin {
@@ -40,12 +33,28 @@ public abstract class MinecraftClientMixin {
     @Shadow
     public abstract void openPauseMenu(boolean pause);
 
-    @Inject(
-            method = "createWorld",
-            at = @At("HEAD")
+    @ModifyExpressionValue(
+            method = "startIntegratedServer",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/WorldSaveHandler;readProperties()Lnet/minecraft/world/level/LevelProperties;"
+            )
     )
-    private void reset(String worldName, LevelInfo levelInfo, RegistryTracker.Modifiable registryTracker, GeneratorOptions generatorOptions, CallbackInfo ci) {
-        if (!MinecraftClient.getInstance().isOnThread()) {
+    private LevelProperties setIsNewWorld(LevelProperties properties, @Share("isNewWorld") LocalBooleanRef isNewWorld) {
+        isNewWorld.set(properties == null);
+        return properties;
+    }
+
+    @Inject(
+            method = "startIntegratedServer",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/WorldSaveHandler;readProperties()Lnet/minecraft/world/level/LevelProperties;",
+                    shift = At.Shift.AFTER
+            )
+    )
+    private void reset(String name, String displayName, LevelInfo levelInfo, CallbackInfo ci, @Share("isNewWorld") LocalBooleanRef isNewWorld) {
+        if (!MinecraftClient.getInstance().isOnThread() || !isNewWorld.get()) {
             return;
         }
         StandardSettings.createCache();
@@ -55,14 +64,14 @@ public abstract class MinecraftClientMixin {
     }
 
     @Inject(
-            method = "createWorld",
+            method = "startIntegratedServer",
             at = @At("TAIL")
     )
-    private void onWorldJoin(String worldName, LevelInfo levelInfo, RegistryTracker.Modifiable registryTracker, GeneratorOptions generatorOptions, CallbackInfo ci) {
-        if (!MinecraftClient.getInstance().isOnThread()) {
+    private void onWorldJoin(String name, String displayName, LevelInfo levelInfo, CallbackInfo ci, @Share("isNewWorld") LocalBooleanRef isNewWorld) {
+        if (!MinecraftClient.getInstance().isOnThread() || !isNewWorld.get()) {
             return;
         }
-        StandardSettings.saveToWorldFile(worldName);
+        StandardSettings.saveToWorldFile(name);
         if (StandardSettings.isEnabled()) {
             if (this.isWindowFocused()) {
                 StandardSettings.onWorldJoin();
@@ -94,7 +103,7 @@ public abstract class MinecraftClientMixin {
     }
 
     @Inject(
-            method = "startIntegratedServer(Ljava/lang/String;Lnet/minecraft/util/registry/RegistryTracker$Modifiable;Ljava/util/function/Function;Lcom/mojang/datafixers/util/Function4;ZLnet/minecraft/client/MinecraftClient$WorldLoadAction;)V",
+            method = "startIntegratedServer",
             at = @At("HEAD")
     )
     private void resetPendingActions(CallbackInfo ci) {
@@ -104,22 +113,22 @@ public abstract class MinecraftClientMixin {
     }
 
     @Inject(
-            method = "startIntegratedServer(Ljava/lang/String;)V",
+            method = "startIntegratedServer",
             at = @At("HEAD")
     )
-    private void loadCache(String worldName, CallbackInfo ci) {
-        if (MinecraftClient.getInstance().isOnThread()) {
-            StandardSettings.loadCache(worldName);
+    private void loadCache(String name, String displayName, LevelInfo levelInfo, CallbackInfo ci, @Share("isNewWorld") LocalBooleanRef isNewWorld) {
+        if (MinecraftClient.getInstance().isOnThread() && !isNewWorld.get()) {
+            StandardSettings.loadCache(name);
         }
     }
 
     @Inject(
-            method = "startIntegratedServer(Ljava/lang/String;Lnet/minecraft/util/registry/RegistryTracker$Modifiable;Ljava/util/function/Function;Lcom/mojang/datafixers/util/Function4;ZLnet/minecraft/client/MinecraftClient$WorldLoadAction;)V",
+            method = "startIntegratedServer",
             at = @At("TAIL")
     )
-    private void setLastWorld(String worldName, RegistryTracker.Modifiable registryTracker, Function<LevelStorage.Session, DataPackSettings> function, Function4<LevelStorage.Session, RegistryTracker.Modifiable, ResourceManager, DataPackSettings, SaveProperties> function4, boolean safeMode, @Coerce Object worldLoadAction, CallbackInfo ci) {
+    private void setLastWorld(String name, String displayName, LevelInfo levelInfo, CallbackInfo ci) {
         if (MinecraftClient.getInstance().isOnThread()) {
-            StandardSettings.lastWorld = worldName;
+            StandardSettings.lastWorld = name;
         }
     }
 
@@ -144,7 +153,7 @@ public abstract class MinecraftClientMixin {
     )
     private void autoF3Esc_onPreview(Screen screen, CallbackInfo ci) {
         if (screen instanceof LevelLoadingScreen && StandardSettings.config.autoF3Esc) {
-            Text backToGame = TextUtil.translatable("menu.returnToGame");
+            String backToGame = I18n.translate("menu.returnToGame");
             for (Element e : screen.children()) {
                 if (!(e instanceof ButtonWidget)) {
                     continue;

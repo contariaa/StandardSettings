@@ -3,12 +3,11 @@ package me.contaria.standardsettings.options;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import me.contaria.standardsettings.StandardGameOptions;
-import net.minecraft.client.gui.screen.ScreenTexts;
 import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.render.entity.PlayerModelPart;
-import net.minecraft.text.Text;
+import net.minecraft.client.resource.language.I18n;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,13 +42,13 @@ public class PlayerModelPartStandardSetting extends StandardSetting<Boolean> {
     }
 
     @Override
-    public @NotNull Text getName() {
-        return this.playerModelPart.getOptionName();
+    public @NotNull String getName() {
+        return this.playerModelPart.getOptionName().asFormattedString();
     }
 
     @Override
-    public @NotNull Text getDisplayText() {
-        return ScreenTexts.getToggleText(this.get());
+    public @NotNull String getDisplayText() {
+        return I18n.translate(this.get() ? "options.on" : "options.off");
     }
 
     @Override

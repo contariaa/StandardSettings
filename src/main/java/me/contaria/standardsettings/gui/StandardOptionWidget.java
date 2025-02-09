@@ -3,11 +3,10 @@ package me.contaria.standardsettings.gui;
 import me.contaria.standardsettings.options.StandardSetting;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.ParentElement;
-import net.minecraft.client.gui.screen.ScreenTexts;
 import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.resource.language.I18n;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -20,12 +19,12 @@ public class StandardOptionWidget extends AbstractButtonWidget implements Parent
     private boolean isDragging;
 
     public StandardOptionWidget(StandardSetting<?> setting, AbstractButtonWidget mainWidget) {
-        super(mainWidget.x, mainWidget.y, mainWidget.getWidth() + 30, mainWidget.getHeight(), mainWidget.getMessage());
+        super(mainWidget.x, mainWidget.y, mainWidget.getWidth() + 30, 20, mainWidget.getMessage());
 
         this.mainWidget = mainWidget;
-        this.toggle = new ButtonWidget(mainWidget.getWidth() + 5, 0, 25, 20, ScreenTexts.getToggleText(setting.isEnabled()), button -> {
+        this.toggle = new ButtonWidget(mainWidget.getWidth() + 5, 0, 25, 20, I18n.translate(setting.isEnabled() ? "options.on": "options.off"), button -> {
             boolean enabled = setting.toggleEnabled();
-            button.setMessage(ScreenTexts.getToggleText(enabled));
+            button.setMessage(I18n.translate(enabled ? "options.on": "options.off"));
             this.mainWidget.setMessage(setting.getText());
             this.setEnabled(enabled);
         });
@@ -41,13 +40,13 @@ public class StandardOptionWidget extends AbstractButtonWidget implements Parent
     }
 
     @Override
-    public void renderButton(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+    public void renderButton(int mouseX, int mouseY, float delta) {
         this.mainWidget.x = this.x;
         this.mainWidget.y = this.y;
-        this.mainWidget.render(matrices, mouseX, mouseY, delta);
+        this.mainWidget.render(mouseX, mouseY, delta);
         this.toggle.x = this.x + this.mainWidget.getWidth() + 5;
         this.toggle.y = this.y;
-        this.toggle.render(matrices, mouseX, mouseY, delta);
+        this.toggle.render(mouseX, mouseY, delta);
     }
 
     @Override

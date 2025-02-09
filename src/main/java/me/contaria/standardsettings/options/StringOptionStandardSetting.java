@@ -6,7 +6,6 @@ import com.google.gson.JsonPrimitive;
 import me.contaria.standardsettings.StandardGameOptions;
 import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import net.minecraft.client.options.GameOptions;
-import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,10 +15,10 @@ import java.util.function.Function;
 public class StringOptionStandardSetting extends StandardSetting<String> {
     private final Function<GameOptions, String> getter;
     private final BiConsumer<GameOptions, String> setter;
-    private final Function<StringOptionStandardSetting, Text> getText;
+    private final Function<StringOptionStandardSetting, String> getText;
     private final Function<StringOptionStandardSetting, AbstractButtonWidget> createMainWidget;
 
-    public StringOptionStandardSetting(String id, @Nullable String category, StandardGameOptions options, Function<GameOptions, String> getter, BiConsumer<GameOptions, String> setter, Function<StringOptionStandardSetting, Text> getText, Function<StringOptionStandardSetting, AbstractButtonWidget> createMainWidget) {
+    public StringOptionStandardSetting(String id, @Nullable String category, StandardGameOptions options, Function<GameOptions, String> getter, BiConsumer<GameOptions, String> setter, Function<StringOptionStandardSetting, String> getText, Function<StringOptionStandardSetting, AbstractButtonWidget> createMainWidget) {
         super(id, category, options);
         this.getter = getter;
         this.setter = setter;
@@ -51,7 +50,7 @@ public class StringOptionStandardSetting extends StandardSetting<String> {
     }
 
     @Override
-    protected @NotNull Text getDisplayText() {
+    protected @NotNull String getDisplayText() {
         return this.getText.apply(this);
     }
 

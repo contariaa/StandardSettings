@@ -2,7 +2,6 @@ package me.contaria.standardsettings.options;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.StandardGameOptions;
 import me.contaria.standardsettings.mixin.accessors.BooleanOptionAccessor;
 import me.contaria.standardsettings.mixin.accessors.OptionAccessor;
@@ -10,7 +9,7 @@ import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.options.BooleanOption;
 import net.minecraft.client.options.GameOptions;
-import net.minecraft.text.Text;
+import net.minecraft.client.resource.language.I18n;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,13 +44,13 @@ public class BooleanOptionStandardSetting extends StandardSetting<Boolean> {
     }
 
     @Override
-    public @NotNull Text getName() {
-        return TextUtil.translatable(((OptionAccessor) this.option).standardsettings$getKey());
+    public @NotNull String getName() {
+        return I18n.translate(((OptionAccessor) this.option).standardsettings$getKey());
     }
 
     @Override
-    public @NotNull Text getDisplayText() {
-        return StandardSetting.getTextWithoutPrefix(this.option.getDisplayString(this.options), this.option.getDisplayPrefix());
+    public @NotNull String getDisplayText() {
+        return StandardSetting.getStringWithoutPrefix(this.option.getDisplayString(this.options), this.option.getDisplayPrefix());
     }
 
     @Override
