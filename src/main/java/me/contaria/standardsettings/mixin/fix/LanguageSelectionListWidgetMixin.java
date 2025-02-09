@@ -3,7 +3,7 @@ package me.contaria.standardsettings.mixin.fix;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import me.contaria.standardsettings.StandardGameOptions;
-import me.contaria.standardsettings.mixin.accessors.GameOptionsScreenAccessor;
+import me.contaria.standardsettings.mixin.accessors.LanguageOptionsScreenAccessor;
 import net.minecraft.client.gui.screen.options.LanguageOptionsScreen;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.resource.language.LanguageDefinition;
@@ -27,7 +27,7 @@ public abstract class LanguageSelectionListWidgetMixin {
             )
     )
     private LanguageDefinition selectStandardSettingsLanguage(LanguageManager manager, Operation<LanguageDefinition> original) {
-        GameOptions options = ((GameOptionsScreenAccessor) this.field_18744).standardsettings$getGameOptions();
+        GameOptions options = ((LanguageOptionsScreenAccessor) this.field_18744).standardsettings$getOptions();
         if (options instanceof StandardGameOptions) {
             return manager.getLanguage(options.language);
         }

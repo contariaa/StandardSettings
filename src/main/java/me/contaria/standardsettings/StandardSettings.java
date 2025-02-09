@@ -1,11 +1,12 @@
 package me.contaria.standardsettings;
 
 import me.contaria.standardsettings.mixin.accessors.BakedModelManagerAccessor;
+import me.contaria.standardsettings.mixin.accessors.SpriteAtlasTextureAccessor;
 import me.contaria.standardsettings.options.StandardSetting;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.resource.language.LanguageManager;
+import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.Window;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,7 +20,6 @@ import java.util.List;
 
 public class StandardSettings {
     public static final Logger LOGGER = LogManager.getLogger();
-    public static final boolean HAS_SODIUM = FabricLoader.getInstance().isModLoaded("sodium");
     public static StandardSettingsConfig config;
 
     @Nullable
@@ -49,9 +49,9 @@ public class StandardSettings {
 
     private static void updateSettings() {
         MinecraftClient client = MinecraftClient.getInstance();
-        Window window = client.getWindow();
+        Window window = client.window;
 
-        window.applyVideoMode();
+        window.method_4475();
 
         if (window.getScaleFactor() != client.options.guiScale) {
             client.onResolutionChanged();
@@ -64,8 +64,10 @@ public class StandardSettings {
         }
 
         BakedModelManagerAccessor bakedModelManager = (BakedModelManagerAccessor) client.getBakedModelManager();
-        if (bakedModelManager.standardsettings$getMipmap() != client.options.mipmapLevels) {
-            client.resetMipmapLevels(client.options.mipmapLevels);
+        if (((SpriteAtlasTextureAccessor) client.getSpriteAtlas()).standardsettings$getMipLevel() != client.options.mipmapLevels) {
+            client.getSpriteAtlas().setMipLevel(client.options.mipmapLevels);
+            client.getTextureManager().bindTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEX);
+            client.getSpriteAtlas().setFilter(false, client.options.mipmapLevels > 0);
             bakedModelManager.standardsettings$apply(bakedModelManager.standardsettings$prepare(client.getResourceManager(), client.getProfiler()), client.getResourceManager(), client.getProfiler());
         }
 

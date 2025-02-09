@@ -6,6 +6,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(DoubleOption.class)
 public interface DoubleOptionAccessor extends OptionAccessor {
-    @Invoker("adjust")
+    @Invoker("method_18618")
     double standardsettings$adjust(double value);
 }

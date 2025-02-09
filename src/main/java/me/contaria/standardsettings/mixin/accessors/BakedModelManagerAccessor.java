@@ -5,14 +5,10 @@ import net.minecraft.client.render.model.ModelLoader;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.profiler.Profiler;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(BakedModelManager.class)
 public interface BakedModelManagerAccessor {
-    @Accessor("mipmap")
-    int standardsettings$getMipmap();
-
     @Invoker("prepare")
     ModelLoader standardsettings$prepare(ResourceManager resourceManager, Profiler profiler);
 

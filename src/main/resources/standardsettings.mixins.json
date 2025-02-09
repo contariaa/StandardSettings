@@ -7,18 +7,16 @@
     "accessors.BakedModelManagerAccessor",
     "accessors.BooleanOptionAccessor",
     "accessors.DoubleOptionAccessor",
-    "accessors.MinecraftClientAccessor",
+    "accessors.LanguageOptionsScreenAccessor",
     "accessors.OptionAccessor",
+    "accessors.SpriteAtlasTextureAccessor",
     "fix.GameOptionsMixin",
     "fix.KeyboardMixin",
     "fix.LanguageOptionsScreenMixin",
+    "fix.LanguageSelectionListWidgetMixin",
     "fix.OptionMixin"
   ],
   "injectors": {
     "defaultRequire": 1
-  },
-  "mixins": [
-    "accessors.GameOptionsScreenAccessor",
-    "fix.LanguageSelectionListWidgetMixin"
-  ]
+  }
 }

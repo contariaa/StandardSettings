@@ -22,9 +22,9 @@ public class StandardOptionWidget extends AbstractButtonWidget implements Parent
         super(mainWidget.x, mainWidget.y, mainWidget.getWidth() + 30, 20, mainWidget.getMessage());
 
         this.mainWidget = mainWidget;
-        this.toggle = new ButtonWidget(mainWidget.getWidth() + 5, 0, 25, 20, I18n.translate(setting.isEnabled() ? "options.on": "options.off"), button -> {
+        this.toggle = new ButtonWidget(mainWidget.getWidth() + 5, 0, 25, 20, I18n.translate(setting.isEnabled() ? "options.on" : "options.off"), button -> {
             boolean enabled = setting.toggleEnabled();
-            button.setMessage(I18n.translate(enabled ? "options.on": "options.off"));
+            button.setMessage(I18n.translate(enabled ? "options.on" : "options.off"));
             this.mainWidget.setMessage(setting.getText());
             this.setEnabled(enabled);
         });
@@ -35,7 +35,7 @@ public class StandardOptionWidget extends AbstractButtonWidget implements Parent
         this.mainWidget.active = enabled;
         if (this.mainWidget instanceof TextFieldWidget) {
             ((TextFieldWidget) this.mainWidget).setEditable(enabled);
-            ((TextFieldWidget) this.mainWidget).setFocusUnlocked(enabled);
+            ((TextFieldWidget) this.mainWidget).method_1856(enabled);
         }
     }
 

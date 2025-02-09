@@ -14,7 +14,6 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.options.LanguageOptionsScreen;
 import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.options.*;
 import net.minecraft.client.render.entity.PlayerModelPart;
 import net.minecraft.client.resource.language.I18n;
@@ -87,7 +86,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         // Video Settings
         this.register("fullscreenResolution", "options.video", StandardGameOptions::getFullscreenResolution, StandardGameOptions::setFullscreenResolution, option -> VideoMode.fromString(option.get()).map(VideoMode::toString).orElse(I18n.translate("options.fullscreen.current")), option -> {
             // see FullScreenOption and VideoOptionsScreen#init
-            Window window = MinecraftClient.getInstance().getWindow();
+            Window window = MinecraftClient.getInstance().window;
             Monitor monitor = window.getMonitor();
             return new DoubleOption("options.fullscreen.resolution", -1.0, monitor != null ? monitor.getVideoModeCount() - 1.0 : -1.0, 1.0f, options -> {
                 if (monitor == null) {
@@ -125,12 +124,6 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("particles", "options.video", Option.PARTICLES, options -> options.particles.getId());
         this.register("mipmapLevels", "options.video", Option.MIPMAP_LEVELS);
         this.register("entityShadows", "options.video", Option.ENTITY_SHADOWS);
-        this.register(new BooleanOptionStandardSetting("entityCulling", "options.video", this.options, new BooleanOption("standardsettings.options.entityCulling", StandardGameOptions::getEntityCulling, StandardGameOptions::setEntityCulling)) {
-            @Override
-            public boolean hasWidget() {
-                return super.hasWidget() && StandardSettings.HAS_SODIUM;
-            }
-        });
 
         // Skin Customizations
         for (PlayerModelPart playerModelPart : PlayerModelPart.values()) {
@@ -157,7 +150,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register(new BooleanOptionStandardSetting("rawMouseInput", "options.mouse_settings", this.options, Option.RAW_MOUSE_INPUT) {
             @Override
             public boolean hasWidget() {
-                return super.hasWidget() && InputUtil.isRawMouseMotionSupported();
+                return super.hasWidget() && InputUtil.method_21735();
             }
         });
 
@@ -186,44 +179,16 @@ public class StandardSettingsConfig implements SpeedrunConfig {
 
         // Accessibility Settings
         this.register("backgroundForChatOnly", "options.accessibility.title", Option.TEXT_BACKGROUND, options -> options.backgroundForChatOnly ? 1 : 0);
-        this.register("toggleCrouch", "options.accessibility.title", Option.SNEAK_TOGGLED, options -> options.sneakToggled ? 1 : 0);
-        this.register("toggleSprint", "options.accessibility.title", Option.SPRINT_TOGGLED, options -> options.sprintToggled ? 1 : 0);
 
         // F3 Settings
         this.register("pauseOnLostFocus", "f3", new BooleanOption("standardsettings.options.pauseOnLostFocus", options -> options.pauseOnLostFocus, (options, value) -> options.pauseOnLostFocus = value));
         this.register("advancedItemTooltips", "f3", new BooleanOption("standardsettings.options.advancedItemTooltips", options -> options.advancedItemTooltips, (options, value) -> options.advancedItemTooltips = value));
         this.register("hitboxes", "f3", new BooleanOption("standardsettings.options.hitboxes", StandardGameOptions::getHitBoxes, StandardGameOptions::setHitBoxes)).disable();
         this.register("chunkborders", "f3", new BooleanOption("standardsettings.options.chunkborders", StandardGameOptions::getChunkBorders, StandardGameOptions::setChunkBorders)).disable();
-        this.register("pieDirectory", "f3", StandardGameOptions::getPieDirectory, StandardGameOptions::setPieDirectory, StandardSetting::get, option -> {
-            TextFieldWidget widget = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, 120, 20, option.getName());
-            widget.setMaxLength(128);
-            widget.setTextPredicate(string -> string != null && (string.startsWith("root") || string.isEmpty()));
-            widget.setText(option.get());
-            widget.setChangedListener(string -> {
-                if (string.isEmpty()) {
-                    widget.setText("root");
-                    return;
-                }
-                option.set(string);
-                for (String suggestion : new String[]{
-                        "root.gameRenderer.level.entities",
-                        "root.tick.level.entities.blockEntities"
-                }) {
-                    if (string.length() > 5 && !suggestion.equals(string) && suggestion.startsWith(string)) {
-                        widget.setSuggestion(suggestion.replaceFirst(string, "").split("\\.")[0]);
-                        return;
-                    }
-                }
-                widget.setSuggestion(null);
-            });
-            return widget;
-        }).disable();
 
         // More Settings
         this.register("perspective", "more", new CyclingOption("standardsettings.options.perspective", (options, amount) -> options.perspective = (options.perspective + amount) % 3, (options, option) -> I18n.translate("standardsettings.options.perspective." + options.perspective)), options -> options.perspective).disable();
         this.register("f1", "more", new BooleanOption("standardsettings.options.f1", options -> options.hudHidden, (options, value) -> options.hudHidden = value)).disable();
-        this.register("sneaking", "more", new BooleanOption("standardsettings.options.sneaking", StandardGameOptions::getSneaking, StandardGameOptions::setSneaking)).disable();
-        this.register("sprinting", "more", new BooleanOption("standardsettings.options.sprinting", StandardGameOptions::getSprinting, StandardGameOptions::setSprinting)).disable();
 
         // OnWorldJoin Settings
         this.onWorldJoin(new DoubleOptionStandardSetting("fovOnWorldJoin", "onWorldJoin", this.optionsOnWorldJoin, Option.FOV)).disable();
@@ -318,7 +283,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         if ("toggleAll".equals(field.getName())) {
             return new SpeedrunConfigAPI.CustomOption.Builder<Boolean>(this, this, field, idPrefix)
                     .createWidget((option, innerConfig, configStorage, optionField) ->
-                            new ButtonWidget(0, 0, 150, 20, I18n.translate(option.get() ? "options.off": "options.on"), this::confirmToggleAll)
+                            new ButtonWidget(0, 0, 150, 20, I18n.translate(option.get() ? "options.off" : "options.on"), this::confirmToggleAll)
                     ).build();
         }
         return SpeedrunConfig.super.parseField(field, config, idPrefix);

@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.sugar.Local;
 import me.contaria.standardsettings.StandardGameOptions;
+import net.minecraft.client.font.FontManager;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.options.NarratorOption;
@@ -86,13 +87,12 @@ public abstract class OptionMixin {
     @ModifyExpressionValue(
             method = {
                     "method_18579", // VSYNC
-                    "method_18570", // FORCE_UNICODE_FONT
                     "method_18529", // FULLSCREEN
                     "method_21669"  // RAW_MOUSE_INPUT
             },
             at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/MinecraftClient;getWindow()Lnet/minecraft/client/util/Window;"
+                    value = "FIELD",
+                    target = "Lnet/minecraft/client/MinecraftClient;window:Lnet/minecraft/client/util/Window;"
             )
     )
     private static Window doNotModifyWindow(Window window, @Local(argsOnly = true) GameOptions options) {
@@ -100,5 +100,19 @@ public abstract class OptionMixin {
             return null;
         }
         return window;
+    }
+
+    @ModifyExpressionValue(
+            method = "method_18570", // FORCE_UNICODE_FONT
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/MinecraftClient;getFontManager()Lnet/minecraft/client/font/FontManager;"
+            )
+    )
+    private static FontManager doNotForceUnicodeFont(FontManager fontManager, @Local(argsOnly = true) GameOptions options) {
+        if (options instanceof StandardGameOptions) {
+            return null;
+        }
+        return fontManager;
     }
 }

@@ -6,15 +6,12 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import me.contaria.standardsettings.StandardGameOptions;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.options.KeyBinding;
-import net.minecraft.client.options.StickyKeyBinding;
 import net.minecraft.client.sound.SoundManager;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.sound.SoundCategory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-
-import java.util.function.BooleanSupplier;
 
 @Mixin(GameOptions.class)
 public abstract class GameOptionsMixin {
@@ -45,20 +42,6 @@ public abstract class GameOptionsMixin {
             return null;
         }
         return original.call(translationKey, type, code, category);
-    }
-
-    @WrapOperation(
-            method = "<init>",
-            at = @At(
-                    value = "NEW",
-                    target = "(Ljava/lang/String;ILjava/lang/String;Ljava/util/function/BooleanSupplier;)Lnet/minecraft/client/options/StickyKeyBinding;"
-            )
-    )
-    private StickyKeyBinding doNotCreateKeyBindings(String id, int code, String category, BooleanSupplier toggleGetter, Operation<StickyKeyBinding> original) {
-        if (this.isStandardSettings()) {
-            return null;
-        }
-        return original.call(id, code, category, toggleGetter);
     }
 
     @WrapWithCondition(
