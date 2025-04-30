@@ -5,27 +5,25 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import me.contaria.speedrunapi.config.api.SpeedrunOption;
 import me.contaria.speedrunapi.util.TextUtil;
-import me.contaria.standardsettings.StandardGameOptions;
 import me.contaria.standardsettings.gui.StandardOptionWidget;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.option.GameOptions;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.BooleanSupplier;
 
 public abstract class StandardSetting<T> implements SpeedrunOption<T> {
     private final String id;
     private final String category;
-    protected final StandardGameOptions options;
+
+    private BooleanSupplier visible = () -> true;
 
     private boolean enabled = true;
 
-    public StandardSetting(String id, String category, StandardGameOptions options) {
+    protected StandardSetting(String id, String category) {
         this.id = id;
         this.category = category;
-        this.options = options;
     }
 
     @Override
@@ -48,16 +46,6 @@ public abstract class StandardSetting<T> implements SpeedrunOption<T> {
         return "standardsettings";
     }
 
-    @Override
-    public T get() {
-        return this.get(this.options);
-    }
-
-    @Override
-    public void set(T value) {
-        this.set(this.options, value);
-    }
-
     @SuppressWarnings("unchecked")
     @Override
     public void setUnsafely(Object value) throws ClassCastException {
@@ -66,7 +54,15 @@ public abstract class StandardSetting<T> implements SpeedrunOption<T> {
 
     @Override
     public boolean hasWidget() {
-        return true;
+        return this.visible.getAsBoolean();
+    }
+
+    public void setVisible(boolean visible) {
+        this.visible = () -> visible;
+    }
+
+    public void setVisible(BooleanSupplier visible) {
+        this.visible = visible;
     }
 
     @Override
@@ -117,21 +113,13 @@ public abstract class StandardSetting<T> implements SpeedrunOption<T> {
 
     protected abstract JsonElement valueToJson();
 
-    protected abstract void set(GameOptions options, T value);
+    public abstract T getVanilla();
 
-    protected abstract T get(GameOptions options);
-
-    public T getOption() {
-        return this.get(MinecraftClient.getInstance().options);
-    }
-
-    public void setOption(T value) {
-        this.set(MinecraftClient.getInstance().options, value);
-    }
+    public abstract void setVanilla(T value);
 
     public void resetOption() {
         if (this.isEnabled()) {
-            this.setOption(this.get());
+            this.setVanilla(this.get());
         }
     }
 
@@ -149,20 +137,5 @@ public abstract class StandardSetting<T> implements SpeedrunOption<T> {
 
     public void disable() {
         this.enabled = false;
-    }
-
-    protected static Text getTextWithoutPrefix(Text text, Text prefix) {
-        if (!(text instanceof TranslatableText)) {
-            return text;
-        }
-        Object[] args = ((TranslatableText) text).getArgs();
-        if (args.length != 2 || !prefix.equals(args[0])) {
-            return text;
-        }
-        Object value = args[1];
-        if (value instanceof Text) {
-            return (Text) value;
-        }
-        return TextUtil.literal(String.valueOf(value));
     }
 }

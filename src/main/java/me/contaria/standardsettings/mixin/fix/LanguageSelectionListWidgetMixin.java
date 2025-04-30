@@ -1,13 +1,8 @@
 package me.contaria.standardsettings.mixin.fix;
 
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import me.contaria.standardsettings.StandardGameOptions;
-import me.contaria.standardsettings.mixin.accessors.GameOptionsScreenAccessor;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import me.contaria.standardsettings.gui.StandardSettingsLanguageScreen;
 import net.minecraft.client.gui.screen.option.LanguageOptionsScreen;
-import net.minecraft.client.option.GameOptions;
-import net.minecraft.client.resource.language.LanguageDefinition;
-import net.minecraft.client.resource.language.LanguageManager;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -19,18 +14,17 @@ public abstract class LanguageSelectionListWidgetMixin {
     @Final
     LanguageOptionsScreen field_18744;
 
-    @WrapOperation(
+    @ModifyExpressionValue(
             method = "<init>",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/resource/language/LanguageManager;getLanguage()Lnet/minecraft/client/resource/language/LanguageDefinition;"
+                    target = "Lnet/minecraft/client/resource/language/LanguageManager;getLanguage()Ljava/lang/String;"
             )
     )
-    private LanguageDefinition selectStandardSettingsLanguage(LanguageManager manager, Operation<LanguageDefinition> original) {
-        GameOptions options = ((GameOptionsScreenAccessor) this.field_18744).standardsettings$getGameOptions();
-        if (options instanceof StandardGameOptions) {
-            return manager.getLanguage(options.language);
+    private String selectStandardSettingsLanguage(String language) {
+        if (this.field_18744 instanceof StandardSettingsLanguageScreen screen) {
+            return screen.setting.get();
         }
-        return original.call(manager);
+        return language;
     }
 }

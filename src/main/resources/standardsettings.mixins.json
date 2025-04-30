@@ -4,20 +4,18 @@
   "compatibilityLevel": "JAVA_17",
   "client": [
     "MinecraftClientMixin",
+    "SimpleOptionMixin",
     "accessors.BakedModelManagerAccessor",
-    "accessors.CyclingButtonWidget$BuilderAccessor",
-    "accessors.CyclingOptionAccessor",
-    "accessors.DoubleOptionAccessor",
-    "accessors.GameOptionsScreenAccessor",
     "accessors.MinecraftClientAccessor",
-    "accessors.OptionAccessor",
-    "fix.GameOptionsMixin",
+    "accessors.SimpleOptionAccessor",
     "fix.KeyboardMixin",
     "fix.LanguageOptionsScreenMixin",
-    "fix.LanguageSelectionListWidgetMixin",
-    "fix.OptionMixin"
+    "fix.LanguageSelectionListWidgetMixin"
   ],
   "injectors": {
     "defaultRequire": 1
-  }
+  },
+  "mixins": [
+    "accessors.CyclingButtonWidgetAccessor"
+  ]
 }

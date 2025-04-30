@@ -8,22 +8,17 @@ import net.minecraft.client.gui.screen.GameMenuScreen;
 import net.minecraft.client.gui.screen.LevelLoadingScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.resource.ResourcePackManager;
 import net.minecraft.server.SaveLoader;
 import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.text.Text;
-import net.minecraft.util.registry.DynamicRegistryManager;
-import net.minecraft.world.gen.GeneratorOptions;
-import net.minecraft.world.level.LevelInfo;
 import net.minecraft.world.level.storage.LevelStorage;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.function.Function;
 
 @Mixin(MinecraftClient.class)
 public abstract class MinecraftClientMixin {
@@ -38,36 +33,46 @@ public abstract class MinecraftClientMixin {
     public abstract void openPauseMenu(boolean pause);
 
     @Inject(
-            method = "createWorld",
+            method = "startIntegratedServer",
             at = @At("HEAD")
     )
-    private void reset(String worldName, LevelInfo levelInfo, DynamicRegistryManager dynamicRegistryManager, GeneratorOptions generatorOptions, CallbackInfo ci) {
+    private void reset(String levelName, LevelStorage.Session session, ResourcePackManager dataPackManager, SaveLoader saveLoader, boolean newWorld, CallbackInfo ci) {
         if (!MinecraftClient.getInstance().isOnThread()) {
             return;
         }
-        StandardSettings.createCache();
-        if (StandardSettings.isEnabled()) {
-            StandardSettings.reset();
+        if (newWorld) {
+            StandardSettings.createCache();
+            if (StandardSettings.isEnabled()) {
+                StandardSettings.reset();
+            }
+        } else {
+            StandardSettings.loadCache(levelName);
         }
+
+        StandardSettings.resetPendingActions();
     }
 
     @Inject(
-            method = "createWorld",
+            method = "startIntegratedServer",
             at = @At("TAIL")
     )
-    private void onWorldJoin(String worldName, LevelInfo levelInfo, DynamicRegistryManager dynamicRegistryManager, GeneratorOptions generatorOptions, CallbackInfo ci) {
+    private void onWorldJoin(String levelName, LevelStorage.Session session, ResourcePackManager dataPackManager, SaveLoader saveLoader, boolean newWorld, CallbackInfo ci) {
         if (!MinecraftClient.getInstance().isOnThread()) {
             return;
         }
-        StandardSettings.saveToWorldFile(worldName);
-        if (StandardSettings.isEnabled()) {
-            if (this.isWindowFocused()) {
-                StandardSettings.onWorldJoin();
-            } else {
-                StandardSettings.onWorldJoinPending = true;
-                StandardSettings.autoF3EscPending = StandardSettings.config.autoF3Esc;
+        if (newWorld) {
+            StandardSettings.saveToWorldFile(levelName);
+            if (StandardSettings.isEnabled()) {
+                if (this.isWindowFocused()) {
+                    StandardSettings.onWorldJoin();
+                } else {
+                    StandardSettings.onWorldJoinPending = true;
+                    StandardSettings.autoF3EscPending = StandardSettings.config.autoF3Esc;
+                }
             }
         }
+
+        StandardSettings.lastWorld = levelName;
     }
 
     @Inject(
@@ -87,36 +92,6 @@ public abstract class MinecraftClientMixin {
     private void onWorldJoin_onResize(CallbackInfo ci) {
         if (StandardSettings.onWorldJoinPending && StandardSettings.config.triggerOnResize) {
             StandardSettings.onWorldJoin();
-        }
-    }
-
-    @Inject(
-            method = "startIntegratedServer(Ljava/lang/String;Ljava/util/function/Function;Ljava/util/function/Function;ZLnet/minecraft/client/MinecraftClient$WorldLoadAction;)V",
-            at = @At("HEAD")
-    )
-    private void resetPendingActions(CallbackInfo ci) {
-        if (MinecraftClient.getInstance().isOnThread()) {
-            StandardSettings.resetPendingActions();
-        }
-    }
-
-    @Inject(
-            method = "startIntegratedServer(Ljava/lang/String;)V",
-            at = @At("HEAD")
-    )
-    private void loadCache(String worldName, CallbackInfo ci) {
-        if (MinecraftClient.getInstance().isOnThread()) {
-            StandardSettings.loadCache(worldName);
-        }
-    }
-
-    @Inject(
-            method = "startIntegratedServer(Ljava/lang/String;Ljava/util/function/Function;Ljava/util/function/Function;ZLnet/minecraft/client/MinecraftClient$WorldLoadAction;)V",
-            at = @At("TAIL")
-    )
-    private void setLastWorld(String worldName, Function<LevelStorage.Session, SaveLoader.DataPackSettingsSupplier> dataPackSettingsSupplierGetter, Function<LevelStorage.Session, SaveLoader.SavePropertiesSupplier> savePropertiesSupplierGetter, boolean safeMode, @Coerce Object worldLoadAction, CallbackInfo ci) {
-        if (MinecraftClient.getInstance().isOnThread()) {
-            StandardSettings.lastWorld = worldName;
         }
     }
 

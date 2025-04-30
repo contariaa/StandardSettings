@@ -6,7 +6,6 @@ import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.StandardSettings;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.MatrixStack;
@@ -15,15 +14,17 @@ import net.minecraft.util.Formatting;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 public class KeyBindingStandardSetting extends StandardSetting<InputUtil.Key> {
     private final KeyBinding keyBinding;
     private InputUtil.Key value;
 
     public KeyBindingStandardSetting(String id, @Nullable String category, KeyBinding keyBinding) {
-        super(id, category, null);
+        super(id, category);
         this.keyBinding = keyBinding;
 
-        this.set(this.getOption());
+        this.set(this.getVanilla());
     }
 
     @Override
@@ -37,22 +38,12 @@ public class KeyBindingStandardSetting extends StandardSetting<InputUtil.Key> {
     }
 
     @Override
-    protected void set(GameOptions options, InputUtil.Key value) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    protected InputUtil.Key get(GameOptions options) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public InputUtil.Key getOption() {
+    public InputUtil.Key getVanilla() {
         return InputUtil.fromTranslationKey(this.keyBinding.getBoundKeyTranslationKey());
     }
 
     @Override
-    public void setOption(InputUtil.Key value) {
+    public void setVanilla(InputUtil.Key value) {
         this.keyBinding.setBoundKey(value);
     }
 
@@ -75,11 +66,12 @@ public class KeyBindingStandardSetting extends StandardSetting<InputUtil.Key> {
     public @NotNull Text getDisplayText() {
         Text text = this.value.getLocalizedText();
         if (StandardSettings.config.isFocusedKeyBinding(this)) {
-            return TextUtil.literal("> ").append(text).append(" <").formatted(Formatting.YELLOW);
-        } else {
+            return TextUtil.literal("> ").append(text.copy().formatted(Formatting.WHITE, Formatting.UNDERLINE)).append(" <").formatted(Formatting.YELLOW);
+        }
+        if (this.value != InputUtil.UNKNOWN_KEY) {
             for (StandardSetting<?> setting : StandardSettings.config.standardSettings) {
                 if (setting != this && setting instanceof KeyBindingStandardSetting && setting.isEnabled() && this.value.equals(((KeyBindingStandardSetting) setting).value)) {
-                    return text.shallowCopy().formatted(Formatting.RED);
+                    return TextUtil.literal("[ ").append(text.copy().formatted(Formatting.WHITE)).append(" ]").formatted(Formatting.RED);
                 }
             }
         }
@@ -88,7 +80,7 @@ public class KeyBindingStandardSetting extends StandardSetting<InputUtil.Key> {
 
     @Override
     public @NotNull ClickableWidget createMainWidget() {
-        return new ButtonWidget(0, 0, 120, 20, this.getText(), button -> StandardSettings.config.setFocusedKeyBinding(this)) {
+        return new ButtonWidget(0, 0, 120, 20, this.getText(), button -> StandardSettings.config.setFocusedKeyBinding(this), Supplier::get) {
             @Override
             public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
                 this.setMessage(KeyBindingStandardSetting.this.getText());

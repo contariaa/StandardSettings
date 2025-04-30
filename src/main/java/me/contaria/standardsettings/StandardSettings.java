@@ -5,8 +5,11 @@ import me.contaria.standardsettings.options.StandardSetting;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.render.model.BakedModelManager;
 import net.minecraft.client.resource.language.LanguageManager;
 import net.minecraft.client.util.Window;
+import net.minecraft.resource.SimpleResourceReload;
+import net.minecraft.util.Unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class StandardSettings {
     public static final Logger LOGGER = LogManager.getLogger();
@@ -53,20 +57,27 @@ public class StandardSettings {
 
         window.applyVideoMode();
 
-        if (window.getScaleFactor() != client.options.guiScale) {
+        if (window.getScaleFactor() != client.options.getGuiScale().getValue()) {
             client.onResolutionChanged();
         }
 
         LanguageManager languageManager = client.getLanguageManager();
-        if (!languageManager.getLanguage().getCode().equals(client.options.language)) {
-            languageManager.setLanguage(languageManager.getLanguage(client.options.language));
+        if (!languageManager.getLanguage().equals(client.options.language)) {
+            languageManager.setLanguage(client.options.language);
             languageManager.reload(client.getResourceManager());
         }
 
-        BakedModelManagerAccessor bakedModelManager = (BakedModelManagerAccessor) client.getBakedModelManager();
-        if (bakedModelManager.standardsettings$getMipmapLevels() != client.options.mipmapLevels) {
-            client.setMipmapLevels(client.options.mipmapLevels);
-            bakedModelManager.standardsettings$apply(bakedModelManager.standardsettings$prepare(client.getResourceManager(), client.getProfiler()), client.getResourceManager(), client.getProfiler());
+        BakedModelManager bakedModelManager = client.getBakedModelManager();
+        if (((BakedModelManagerAccessor) bakedModelManager).standardsettings$getMipmapLevels() != client.options.getMipmapLevels().getValue()) {
+            client.setMipmapLevels(client.options.getMipmapLevels().getValue());
+            SimpleResourceReload.start(
+                    client.getResourceManager(),
+                    List.of(client.getBakedModelManager()),
+                    Runnable::run,
+                    Runnable::run,
+                    CompletableFuture.completedFuture(Unit.INSTANCE),
+                    false
+            ).whenComplete().join();
         }
 
         KeyBinding.updateKeysByCode();
@@ -97,7 +108,7 @@ public class StandardSettings {
     public static void saveToWorldFile(String worldName) {
         List<String> options = new ArrayList<>();
         for (StandardSetting<?> setting : config.standardSettings) {
-            options.add(setting.getID() + ":" + setting.getOption());
+            options.add(setting.getID() + ":" + setting.getVanilla());
         }
         for (StandardSetting<?> setting : config.standardSettingsOnWorldJoin) {
             options.add(setting.getID() + ":" + setting.get());

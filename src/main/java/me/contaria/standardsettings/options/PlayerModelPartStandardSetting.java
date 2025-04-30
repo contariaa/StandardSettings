@@ -2,34 +2,44 @@ package me.contaria.standardsettings.options;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import me.contaria.standardsettings.StandardGameOptions;
-import net.minecraft.client.gui.screen.ScreenTexts;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.render.entity.PlayerModelPart;
+import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PlayerModelPartStandardSetting extends StandardSetting<Boolean> {
     public final PlayerModelPart playerModelPart;
+    private boolean value;
 
-    public PlayerModelPartStandardSetting(String id, @Nullable String category, StandardGameOptions options, PlayerModelPart playerModelPart) {
-        super(id, category, options);
+    public PlayerModelPartStandardSetting(String id, @Nullable String category, PlayerModelPart playerModelPart) {
+        super(id, category);
         this.playerModelPart = playerModelPart;
 
-        this.set(this.getOption());
+        this.set(this.getVanilla());
     }
 
     @Override
-    public Boolean get(GameOptions options) {
-        return options.isPlayerModelPartEnabled(this.playerModelPart);
+    public Boolean get() {
+        return this.value;
     }
 
     @Override
-    public void set(GameOptions options, Boolean value) {
-        options.togglePlayerModelPart(this.playerModelPart, value);
+    public void set(Boolean value) {
+        this.value = value;
+    }
+
+    @Override
+    public Boolean getVanilla() {
+        return MinecraftClient.getInstance().options.isPlayerModelPartEnabled(this.playerModelPart);
+    }
+
+    @Override
+    public void setVanilla(Boolean value) {
+        MinecraftClient.getInstance().options.togglePlayerModelPart(this.playerModelPart, value);
     }
 
     @Override
@@ -54,9 +64,9 @@ public class PlayerModelPartStandardSetting extends StandardSetting<Boolean> {
 
     @Override
     public @NotNull ClickableWidget createMainWidget() {
-        return new ButtonWidget(0, 0, 120, 20, this.getText(), button -> {
-            this.options.togglePlayerModelPart(this.playerModelPart, this.options.isPlayerModelPartEnabled(this.playerModelPart));
+        return ButtonWidget.builder(this.getText(), button -> {
+            this.set(!this.get());
             button.setMessage(this.getText());
-        });
+        }).dimensions(0, 0, 120, 20).build();
     }
 }

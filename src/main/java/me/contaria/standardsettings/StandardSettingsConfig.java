@@ -1,33 +1,35 @@
 package me.contaria.standardsettings;
 
 import com.google.gson.JsonParseException;
+import com.mojang.serialization.Codec;
 import me.contaria.speedrunapi.config.SpeedrunConfigAPI;
 import me.contaria.speedrunapi.config.SpeedrunConfigContainer;
 import me.contaria.speedrunapi.config.api.SpeedrunConfig;
 import me.contaria.speedrunapi.config.api.SpeedrunOption;
 import me.contaria.speedrunapi.config.api.annotations.Config;
 import me.contaria.speedrunapi.util.TextUtil;
-import me.contaria.standardsettings.mixin.accessors.CyclingButtonWidget$BuilderAccessor;
-import me.contaria.standardsettings.mixin.accessors.CyclingOptionAccessor;
-import me.contaria.standardsettings.mixin.accessors.OptionAccessor;
+import me.contaria.standardsettings.compat.SodiumCompat;
+import me.contaria.standardsettings.gui.StandardSettingsLanguageScreen;
+import me.contaria.standardsettings.interfaces.StandardSettingsSimpleOption;
+import me.contaria.standardsettings.mixin.accessors.MinecraftClientAccessor;
+import me.contaria.standardsettings.mixin.accessors.SimpleOptionAccessor;
 import me.contaria.standardsettings.options.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ScreenTexts;
-import net.minecraft.client.gui.screen.option.LanguageOptionsScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.option.*;
 import net.minecraft.client.render.entity.PlayerModelPart;
+import net.minecraft.client.resource.language.LanguageDefinition;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.Monitor;
 import net.minecraft.client.util.VideoMode;
 import net.minecraft.client.util.Window;
+import net.minecraft.screen.ScreenTexts;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.text.Text;
-import net.minecraft.util.Arm;
+import net.minecraft.util.profiler.ProfileResult;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,16 +41,13 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 @Config(init = Config.InitPoint.POSTLAUNCH)
 public class StandardSettingsConfig implements SpeedrunConfig {
-    @Config.Ignored
-    public final StandardGameOptions options = new StandardGameOptions(MinecraftClient.getInstance(), null);
-    @Config.Ignored
-    public final StandardGameOptions optionsOnWorldJoin = new StandardGameOptions(MinecraftClient.getInstance(), null);
     @Config.Ignored
     public final List<StandardSetting<?>> standardSettings = new ArrayList<>();
     @Config.Ignored
@@ -85,136 +84,221 @@ public class StandardSettingsConfig implements SpeedrunConfig {
     {
         StandardSettings.config = this;
 
-        this.register("fov", "menu.options", Option.FOV);
+        GameOptions options = MinecraftClient.getInstance().options;
+
+        this.register("fov", "menu.options", options.getFov());
 
         // Online Options
-        this.registerBoolean("realmsNotifications", "menu.options", Option.REALMS_NOTIFICATIONS);
-        this.registerBoolean("allowServerListing", "options.online", Option.ALLOW_SERVER_LISTING);
+        this.register("realmsNotifications", "options.online", options.getRealmsNotifications());
+        this.register("allowServerListing", "options.online", options.getAllowServerListing());
 
         // Video Settings
-        this.register("fullscreenResolution", "options.video", StandardGameOptions::getFullscreenResolution, StandardGameOptions::setFullscreenResolution, option -> VideoMode.fromString(option.get()).map(mode -> TextUtil.literal(mode.toString())).orElse(TextUtil.translatable("options.fullscreen.current")), option -> {
-            // see FullScreenOption and VideoOptionsScreen#init
-            Window window = MinecraftClient.getInstance().getWindow();
-            Monitor monitor = window.getMonitor();
-            return new DoubleOption("options.fullscreen.resolution", -1.0, monitor != null ? monitor.getVideoModeCount() - 1.0 : -1.0, 1.0f, options -> {
-                if (monitor == null) {
-                    return -1.0;
-                }
-                return VideoMode.fromString(option.get()).map(monitor::findClosestVideoModeIndex).orElse(-1).doubleValue();
-            }, (options, value) -> {
-                if (monitor == null) {
-                    return;
-                }
-                if (value == -1.0) {
-                    option.set(null);
-                } else {
-                    option.set(monitor.getVideoMode(value.intValue()).asString());
-                }
-            }, (options, doubleOption) -> option.getText()).createButton(options, 0, 0, 120);
-        });
-        this.register("biomeBlendRadius", "options.video", Option.BIOME_BLEND_RADIUS);
-        this.register(new EnumOptionStandardSetting<GraphicsMode>("graphicsMode", "options.video", this.options, Option.GRAPHICS, GraphicsMode.class) {
-            @Override
-            public void set(GameOptions options, GraphicsMode value) {
-                // see Option.GRAPHICS's setter
-                options.graphicsMode = value;
-                if (!(options instanceof StandardGameOptions)) {
-                    if (options.graphicsMode == GraphicsMode.FABULOUS && MinecraftClient.getInstance().getVideoWarningManager().hasCancelledAfterWarning()) {
-                        StandardSettings.LOGGER.warn("Set Graphics Mode to 'Fancy' because 'Fabulous!' is not supported on this device.");
-                        options.graphicsMode = GraphicsMode.FANCY;
+        this.register(CustomStandardSetting.ofString(
+                "fullscreenResolution",
+                "options.video",
+                () -> MinecraftClient.getInstance().getWindow().getVideoMode().map(VideoMode::asString).orElse(null),
+                value -> MinecraftClient.getInstance().getWindow().setVideoMode(VideoMode.fromString(value)),
+                value -> VideoMode.fromString(value).map(mode -> TextUtil.literal(mode.toString())).orElse(TextUtil.translatable("options.fullscreen.current")),
+                setting -> {
+                    // see FullScreenOption and VideoOptionsScreen#init
+                    Window window = MinecraftClient.getInstance().getWindow();
+                    Monitor monitor = window.getMonitor();
+
+                    int index;
+                    if (monitor == null) {
+                        index = -1;
+                    } else {
+                        index = VideoMode.fromString(setting.get()).map(monitor::findClosestVideoModeIndex).orElse(-1);
                     }
-                    MinecraftClient.getInstance().worldRenderer.reload();
+
+                    SimpleOption<Integer> simpleOption = new SimpleOption<>("options.fullscreen.resolution", SimpleOption.emptyTooltip(), (prefix, value) -> {
+                        if (monitor == null) {
+                            return TextUtil.translatable("options.fullscreen.unavailable");
+                        }
+                        if (value == -1) {
+                            return TextUtil.translatable("options.fullscreen.current");
+                        }
+                        return TextUtil.literal(monitor.getVideoMode(value).toString());
+                    }, new SimpleOption.ValidatingIntSliderCallbacks(-1, monitor != null ? monitor.getVideoModeCount() - 1 : -1), index, value -> {
+                        if (monitor == null) {
+                            return;
+                        }
+                        if (value == -1) {
+                            setting.set(null);
+                        } else {
+                            setting.set(monitor.getVideoMode(value).asString());
+                        }
+                    });
+
+                    return simpleOption.createWidget(MinecraftClient.getInstance().options, 0, 0, 120);
+                })
+        );
+
+        this.register("biomeBlendRadius", "options.video", options.getBiomeBlendRadius());
+        this.register(new SimpleOptionStandardSetting<GraphicsMode>("graphicsMode", "options.video", options.getGraphicsMode()) {
+            @Override
+            public void setVanilla(GraphicsMode value) {
+                // see Option.GRAPHICS's setter
+                if (MinecraftClient.getInstance().isRunning() && MinecraftClient.getInstance().getVideoWarningManager().hasCancelledAfterWarning() && value == GraphicsMode.FABULOUS) {
+                    StandardSettings.LOGGER.warn("Set Graphics Mode to 'Fancy' because 'Fabulous!' is not supported on this device.");
+                    super.setVanilla(GraphicsMode.FANCY);
+                } else {
+                    super.setVanilla(value);
                 }
             }
         });
-        this.register("renderDistance", "options.video", Option.RENDER_DISTANCE);
-        this.register("prioritizeChunkUpdates", "options.video", Option.CHUNK_BUILDER_MODE);
-        this.register("simulationDistance", "options.video", Option.SIMULATION_DISTANCE);
-        this.registerEnum("ao", "options.video", Option.AO, AoMode.class);
-        this.register("maxFps", "options.video", Option.FRAMERATE_LIMIT);
-        this.registerBoolean("enableVsync", "options.video", Option.VSYNC);
-        this.registerBoolean("bobView", "options.video", Option.VIEW_BOBBING);
-        this.register(new CyclingOptionStandardSetting<Integer>("guiScale", "options.video", this.options, (CyclingOption<Integer>) Option.GUI_SCALE) {
+        this.register("renderDistance", "options.video", options.getViewDistance());
+        this.register("prioritizeChunkUpdates", "options.video", options.getChunkBuilderMode());
+        this.register("simulationDistance", "options.video", options.getSimulationDistance());
+        this.register("ao", "options.video", options.getAo());
+        this.register("maxFps", "options.video", options.getMaxFps());
+        this.register("enableVsync", "options.video", options.getEnableVsync());
+        this.register("bobView", "options.video", options.getBobView());
+        this.register(new SimpleOptionStandardSetting<>("guiScale", "options.video", options.getGuiScale()) {
             @Override
-            public void set(GameOptions options, Integer value) {
-                options.guiScale = Math.max(0, value);
+            public void set(SimpleOption<Integer> option, Integer value) {
+                // bypass vanillas dynamic bounds enforcing for gui scale
+                //noinspection unchecked
+                ((SimpleOptionAccessor<Integer>) (Object) option).standardsettings$setValue(Math.max(0, value));
+            }
+        });
+        this.register("attackIndicator", "options.video", options.getAttackIndicator());
+        this.register(new SimpleOptionStandardSetting<>("gamma", "options.video", options.getGamma()) {
+            @Override
+            protected @NotNull SimpleOption<Double> copySimpleOption(SimpleOption<Double> option) {
+                //noinspection unchecked
+                return ((StandardSettingsSimpleOption<Double>) (Object) option).standardsettings$copy(
+                        // allows brightness of up to 500% in StandardSettings
+                        // Planifolia is still needed to allow the 500% to apply
+                        new SimpleOption.SliderCallbacks<>() {
+                            @Override
+                            public double toSliderProgress(Double value) {
+                                return value / 5.0;
+                            }
+
+                            @Override
+                            public Double toValue(double sliderProgress) {
+                                return sliderProgress * 5.0;
+                            }
+
+                            @Override
+                            public Optional<Double> validate(Double value) {
+                                return value >= 0.0 && value <= 5.0 ? Optional.of(value) : Optional.empty();
+                            }
+
+                            @Override
+                            public Codec<Double> codec() {
+                                return Codec.doubleRange(0.0, 5.0);
+                            }
+                        }
+                );
             }
 
             @Override
-            protected Integer fromInt(int i) {
-                return i;
-            }
-
-            @Override
-            protected int toInt(Integer value) {
-                return value;
-            }
-        });
-        this.registerEnum("attackIndicator", "options.video", Option.ATTACK_INDICATOR, AttackIndicator.class);
-        this.register("gamma", "options.video", new DoubleOption("options.gamma", 0.0, 5.0, 0.0f, options -> options.gamma, (options, value) -> options.gamma = value, (options, option) -> TextUtil.literal((int) (option.get(options) * 100.0) + "%")));
-        this.registerEnum("renderClouds", "options.video", Option.CLOUDS, CloudRenderMode.class);
-        this.registerBoolean("fullscreen", "options.video", Option.FULLSCREEN);
-        this.registerEnum("particles", "options.video", Option.PARTICLES, ParticlesMode.class);
-        this.register("mipmapLevels", "options.video", Option.MIPMAP_LEVELS);
-        this.registerBoolean("entityShadows", "options.video", Option.ENTITY_SHADOWS);
-        this.register("screenEffectScale", "options.video", Option.DISTORTION_EFFECT_SCALE);
-        this.register("entityDistanceScaling", "options.video", Option.ENTITY_DISTANCE_SCALING);
-        this.register("fovEffectScale", "options.video", Option.FOV_EFFECT_SCALE);
-        this.registerBoolean("showAutosaveIndicator", "options.video", Option.SHOW_AUTOSAVE_INDICATOR);
-        this.register(new BooleanOptionStandardSetting("entityCulling", "options.video", this.options, CyclingOption.create("standardsettings.options.entityCulling", StandardGameOptions::getEntityCulling, (options, option, value) -> StandardGameOptions.setEntityCulling(options, value))) {
-            @Override
-            public boolean hasWidget() {
-                return super.hasWidget() && StandardSettings.HAS_SODIUM;
+            public void setVanilla(Double value) {
+                // limits value to 1.0 if it's invalid
+                if (this.option.getCallbacks().validate(value).isPresent()) {
+                    super.setVanilla(value);
+                } else {
+                    super.setVanilla(Math.min(1.0, value));
+                }
             }
         });
+        this.register("renderClouds", "options.video", options.getCloudRenderMode());
+        this.register("fullscreen", "options.video", options.getFullscreen());
+        this.register("particles", "options.video", options.getParticles());
+        this.register("mipmapLevels", "options.video", options.getMipmapLevels());
+        this.register("entityShadows", "options.video", options.getEntityShadows());
+        this.register("screenEffectScale", "options.video", options.getDistortionEffectScale());
+        this.register("entityDistanceScaling", "options.video", options.getEntityDistanceScaling());
+        this.register("fovEffectScale", "options.video", options.getFovEffectScale());
+        this.register("showAutosaveIndicator", "options.video", options.getShowAutosaveIndicator());
+        this.register("glintSpeed", "options.video", options.getGlintSpeed());
+        this.register("glintStrength", "options.video", options.getGlintStrength());
+        this.register("entityCulling", "options.video", () -> StandardSettings.HAS_SODIUM && SodiumCompat.getEntityCulling(), value -> {
+            if (StandardSettings.HAS_SODIUM) {
+                SodiumCompat.setEntityCulling(value);
+            }
+        }).setVisible(StandardSettings.HAS_SODIUM);
 
         // Skin Customizations
         for (PlayerModelPart playerModelPart : PlayerModelPart.values()) {
-            this.register(new PlayerModelPartStandardSetting("modelPart_" + playerModelPart.getName(), "options.skinCustomisation", this.options, playerModelPart));
+            this.register(new PlayerModelPartStandardSetting("modelPart_" + playerModelPart.getName(), "options.skinCustomisation", playerModelPart));
         }
-        this.registerEnum("mainHand", "options.skinCustomisation", Option.MAIN_HAND, Arm.class);
+        this.register("mainHand", "options.skinCustomisation", options.getMainArm());
 
         // Music & Sounds
         for (SoundCategory soundCategory : SoundCategory.values()) {
-            this.register(new SoundCategoryStandardSetting("soundCategory_" + soundCategory.getName(), "options.sounds", this.options, soundCategory));
+            this.register("soundCategory_" + soundCategory.getName(), "options.sounds", options.getSoundVolumeOption(soundCategory));
         }
-        this.registerBoolean("showSubtitles", "options.sounds", Option.SUBTITLES);
-        this.register(new StringOptionStandardSetting("soundDevice", "options.sounds", this.options,
-                options -> (String) ((CyclingOptionAccessor) Option.AUDIO_DEVICE).standardsettings$getGetter().apply(options),
-                (options, value) -> ((CyclingOptionAccessor) Option.AUDIO_DEVICE).standardsettings$getSetter().accept(options, Option.AUDIO_DEVICE, value),
-                setting -> ((CyclingButtonWidget$BuilderAccessor) ((CyclingOptionAccessor) Option.AUDIO_DEVICE).standardsettings$getButtonBuilderFactory().get()).standardsettings$getValueToText().apply(setting.get()),
-                setting -> ((CyclingOptionAccessor) Option.AUDIO_DEVICE).standardsettings$getButtonBuilderFactory().get()
-                        .omitKeyText()
-                        .initially(setting.get())
-                        .build(0, 0, 120, 20, setting.getName(), (button, value) -> setting.set((String) value))
-        ) {
+        this.register("showSubtitles", "options.sounds", options.getShowSubtitles());
+        this.register(new SimpleOptionStandardSetting<>("soundDevice", "options.sounds", options.getSoundDevice()) {
             @Override
-            public @NotNull Text getName() {
-                return ((OptionAccessor) Option.AUDIO_DEVICE).standardsettings$getDisplayPrefix();
+            protected @NotNull SimpleOption<String> copySimpleOption(SimpleOption<String> option) {
+                //noinspection unchecked
+                return ((StandardSettingsSimpleOption<String>) (Object) option).standardsettings$copy(
+                        // sound devices are validated by checking if they are in SoundManager#getDevices
+                        // to ensure this works before the sound manager is initialized, vanilla checks MinecraftClient#isRunning
+                        // StandardSettings loads after running has been set to true but before the sound manager is loaded
+                        new SimpleOption.Callbacks<>() {
+                            @Override
+                            public Function<SimpleOption<String>, ClickableWidget> getWidgetCreator(SimpleOption.TooltipFactory<String> tooltipFactory, GameOptions gameOptions, int x, int y, int width, Consumer<String> changeCallback) {
+                                return option.getCallbacks().getWidgetCreator(tooltipFactory, gameOptions, x, y, width, changeCallback);
+                            }
+
+                            @Override
+                            public Optional<String> validate(String value) {
+                                // skip validating sound device
+                                return Optional.of(value);
+                            }
+
+                            @Override
+                            public Codec<String> codec() {
+                                return option.getCodec();
+                            }
+                        }
+                );
+            }
+
+            @Override
+            public void set(String value) {
+                //noinspection unchecked
+                ((SimpleOptionAccessor<String>) (Object) this.copy).standardsettings$setValue(value);
             }
         });
+        this.register("directionalAudio", "options.sounds", options.getDirectionalAudio());
 
         // Language
-        this.register("language", "options.language", options -> options.language, (options, value) -> options.language = value, option -> TextUtil.literal(MinecraftClient.getInstance().getLanguageManager().getLanguage(option.get()).toString()), option -> new ButtonWidget(0, 0, 120, 20, option.getText(), button -> MinecraftClient.getInstance().setScreen(new LanguageOptionsScreen(MinecraftClient.getInstance().currentScreen, options, MinecraftClient.getInstance().getLanguageManager()))));
-        this.registerBoolean("forceUnicodeFont", "options.language", Option.FORCE_UNICODE_FONT);
+        this.register(CustomStandardSetting.ofString(
+                "language", "options.language",
+                () -> MinecraftClient.getInstance().options.language,
+                value -> MinecraftClient.getInstance().options.language = value,
+                value -> {
+                    LanguageDefinition language = MinecraftClient.getInstance().getLanguageManager().getLanguage(value);
+                    if (language != null) {
+                        return language.getDisplayText();
+                    }
+                    return TextUtil.literal(value);
+                },
+                setting -> ButtonWidget.builder(setting.getText(), button -> MinecraftClient.getInstance().setScreen(
+                        new StandardSettingsLanguageScreen(MinecraftClient.getInstance(), setting)
+                )).size(120, 20).build()
+        ));
+        this.register("forceUnicodeFont", "options.language", options.getForceUnicodeFont());
 
         // Mouse Settings
-        this.register("mouseSensitivity", "options.mouse_settings", Option.SENSITIVITY);
-        this.registerBoolean("invertYMouse", "options.mouse_settings", Option.INVERT_MOUSE);
-        this.register("mouseWheelSensitivity", "options.mouse_settings", Option.MOUSE_WHEEL_SENSITIVITY);
-        this.registerBoolean("discrete_mouse_scroll", "options.mouse_settings", Option.DISCRETE_MOUSE_SCROLL);
-        this.registerBoolean("touchscreen", "options.mouse_settings", Option.TOUCHSCREEN);
-        this.register(new BooleanOptionStandardSetting("rawMouseInput", "options.mouse_settings", this.options, Option.RAW_MOUSE_INPUT) {
-            @Override
-            public boolean hasWidget() {
-                return super.hasWidget() && InputUtil.isRawMouseMotionSupported();
-            }
-        });
+        this.register("mouseSensitivity", "options.mouse_settings", options.getMouseSensitivity());
+        this.register("invertYMouse", "options.mouse_settings", options.getInvertYMouse());
+        this.register("mouseWheelSensitivity", "options.mouse_settings", options.getMouseWheelSensitivity());
+        this.register("discrete_mouse_scroll", "options.mouse_settings", options.getDiscreteMouseScroll());
+        this.register("touchscreen", "options.mouse_settings", options.getTouchscreen());
+        this.register("rawMouseInput", "options.mouse_settings", options.getRawMouseInput()).setVisible(InputUtil::isRawMouseMotionSupported);
 
         // Controls
-        this.registerBoolean("autoJump", "options.controls", Option.AUTO_JUMP);
-        this.registerBoolean("toggleCrouch", "options.controls", Option.SNEAK_TOGGLED);
-        this.registerBoolean("toggleSprint", "options.controls", Option.SPRINT_TOGGLED);
+        this.register("toggleCrouch", "options.controls", options.getSneakToggled());
+        this.register("toggleSprint", "options.controls", options.getSprintToggled());
+        this.register("autoJump", "options.controls", options.getAutoJump());
+        this.register("operatorItemsTab", "options.controls", options.getOperatorItemsTab());
         KeyBinding[] keyBindings = ArrayUtils.clone(MinecraftClient.getInstance().options.allKeys);
         Arrays.sort(keyBindings);
         for (KeyBinding keyBinding : keyBindings) {
@@ -222,111 +306,118 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         }
 
         // Chat Settings
-        this.registerEnum("chatVisibility", "options.chat.title", Option.VISIBILITY, ChatVisibility.class);
-        this.registerBoolean("chatColors", "options.chat.title", Option.CHAT_COLOR);
-        this.registerBoolean("chatLinks", "options.chat.title", Option.CHAT_LINKS);
-        this.registerBoolean("chatLinksPrompt", "options.chat.title", Option.CHAT_LINKS_PROMPT);
-        this.register("chatOpacity", "options.chat.title", Option.CHAT_OPACITY);
-        this.register("textBackgroundOpacity", "options.chat.title", Option.TEXT_BACKGROUND_OPACITY);
-        this.register("chatScale", "options.chat.title", Option.CHAT_SCALE);
-        this.register("chatLineSpacing", "options.chat.title", Option.CHAT_LINE_SPACING);
-        this.register("chatDelay", "options.chat.title", Option.CHAT_DELAY_INSTANT);
-        this.register("chatWidth", "options.chat.title", Option.CHAT_WIDTH);
-        this.register("chatHeightFocused", "options.chat.title", Option.CHAT_HEIGHT_FOCUSED);
-        this.register("chatHeightUnfocused", "options.chat.title", Option.SATURATION);
-        this.register(new EnumOptionStandardSetting<NarratorMode>("narrator", "options.chat.title", this.options, Option.NARRATOR, NarratorMode.class) {
-            @Override
-            protected void set(GameOptions options, NarratorMode value) {
-                if (this.get(options) != value) {
-                    super.set(options, value);
-                }
-            }
-        });
-        this.registerBoolean("autoSuggestions", "options.chat.title", Option.AUTO_SUGGESTIONS);
-        this.registerBoolean("hideMatchedNames", "options.chat.title", Option.HIDE_MATCHED_NAMES);
-        this.registerBoolean("reducedDebugInfo", "options.chat.title", Option.REDUCED_DEBUG_INFO);
+        this.register("chatVisibility", "options.chat.title", options.getChatVisibility());
+        this.register("chatColors", "options.chat.title", options.getChatColors());
+        this.register("chatLinks", "options.chat.title", options.getChatLinks());
+        this.register("chatLinksPrompt", "options.chat.title", options.getChatLinksPrompt());
+        this.register("chatOpacity", "options.chat.title", options.getChatOpacity());
+        this.register("textBackgroundOpacity", "options.chat.title", options.getTextBackgroundOpacity());
+        this.register("chatScale", "options.chat.title", options.getChatScale());
+        this.register("chatLineSpacing", "options.chat.title", options.getChatLineSpacing());
+        this.register("chatDelay", "options.chat.title", options.getChatDelay());
+        this.register("chatWidth", "options.chat.title", options.getChatWidth());
+        this.register("chatHeightFocused", "options.chat.title", options.getChatHeightFocused());
+        this.register("chatHeightUnfocused", "options.chat.title", options.getChatHeightUnfocused());
+        this.register("narrator", "options.chat.title", options.getNarrator());
+        this.register("autoSuggestions", "options.chat.title", options.getAutoSuggestions());
+        this.register("hideMatchedNames", "options.chat.title", options.getHideMatchedNames());
+        this.register("reducedDebugInfo", "options.chat.title", options.getReducedDebugInfo());
+        this.register("onlyShowSecureChat", "options.chat.title", options.getOnlyShowSecureChat());
 
         // Accessibility Settings
-        this.registerBoolean("backgroundForChatOnly", "options.accessibility.title", Option.TEXT_BACKGROUND);
-        this.registerBoolean("darkMojangStudiosBackground", "options.accessibility.title", Option.MONOCHROME_LOGO);
-        this.registerBoolean("hideLightningFlashes", "options.accessibility.title", Option.HIDE_LIGHTNING_FLASHES);
+        this.register("highContrast", "options.accessibility.title", options.getHighContrast());
+        this.register("backgroundForChatOnly", "options.accessibility.title", options.getBackgroundForChatOnly());
+        this.register("notificationDisplayTime", "options.accessibility.title", options.getNotificationDisplayTime());
+        this.register("darknessEffectScale", "options.accessibility.title", options.getDarknessEffectScale());
+        this.register("damageTiltStrength", "options.accessibility.title", options.getDamageTiltStrength());
+        this.register("hideLightningFlashes", "options.accessibility.title", options.getHideLightningFlashes());
+        this.register("darkMojangStudiosBackground", "options.accessibility.title", options.getMonochromeLogo());
+        this.register("panoramaScrollSpeed", "options.accessibility.title", options.getPanoramaSpeed());
+
+        // Telemetry Data
+        this.register("telemetryOptInExtra", "options.telemetry", options.getTelemetryOptInExtra());
 
         // F3 Settings
-        this.registerBoolean("pauseOnLostFocus", "f3", CyclingOption.create("standardsettings.options.pauseOnLostFocus", options -> options.pauseOnLostFocus, (options, option, value) -> options.pauseOnLostFocus = value));
-        this.registerBoolean("advancedItemTooltips", "f3", CyclingOption.create("standardsettings.options.advancedItemTooltips", options -> options.advancedItemTooltips, (options, option, value) -> options.advancedItemTooltips = value));
-        this.registerBoolean("hitboxes", "f3", CyclingOption.create("standardsettings.options.hitboxes", StandardGameOptions::getHitBoxes, (options, option, value) -> StandardGameOptions.setHitBoxes(options, value))).disable();
-        this.registerBoolean("chunkborders", "f3", CyclingOption.create("standardsettings.options.chunkborders", StandardGameOptions::getChunkBorders, (options, option, value) -> StandardGameOptions.setChunkBorders(options, value))).disable();
-        this.register("pieDirectory", "f3", StandardGameOptions::getPieDirectory, StandardGameOptions::setPieDirectory, option -> TextUtil.literal(option.get()), option -> {
-            TextFieldWidget widget = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, 120, 20, option.getName());
-            widget.setMaxLength(128);
-            widget.setTextPredicate(string -> string != null && (string.startsWith("root") || string.isEmpty()));
-            widget.setText(option.get());
-            widget.setChangedListener(string -> {
-                if (string.isEmpty()) {
-                    widget.setText("root");
-                    return;
-                }
-                option.set(string);
-                for (String suggestion : new String[]{
-                        "root.gameRenderer.level.entities",
-                        "root.tick.level.entities.blockEntities"
-                }) {
-                    if (string.length() > 5 && !suggestion.equals(string) && suggestion.startsWith(string)) {
-                        widget.setSuggestion(suggestion.replaceFirst(string, "").split("\\.")[0]);
-                        return;
-                    }
-                }
-                widget.setSuggestion(null);
-            });
-            return widget;
-        }).disable();
+        this.register("pauseOnLostFocus", "f3", () -> options.pauseOnLostFocus, value -> options.pauseOnLostFocus = value);
+        this.register("advancedItemTooltips", "f3", () -> options.advancedItemTooltips, value -> options.advancedItemTooltips = value);
+        this.register("hitboxes", "f3", () -> MinecraftClient.getInstance().getEntityRenderDispatcher().shouldRenderHitboxes(), value -> MinecraftClient.getInstance().getEntityRenderDispatcher().setRenderHitboxes(value));
+        this.register("chunkborders", "f3", () -> {
+            MinecraftClient.getInstance().debugRenderer.toggleShowChunkBorder();
+            return MinecraftClient.getInstance().debugRenderer.toggleShowChunkBorder();
+        }, value -> {
+            if (MinecraftClient.getInstance().debugRenderer.toggleShowChunkBorder() != value) {
+                MinecraftClient.getInstance().debugRenderer.toggleShowChunkBorder();
+            }
+        });
+        this.register(CustomStandardSetting.ofString(
+                "pieDirectory", "f3",
+                () -> ProfileResult.getHumanReadableName(((MinecraftClientAccessor) MinecraftClient.getInstance()).standardsettings$getOpenProfilerSection()),
+                value -> ((MinecraftClientAccessor) MinecraftClient.getInstance()).standardsettings$setOpenProfilerSection(value),
+                value -> value.startsWith("root") ? value.replace('.', '\u001e').trim() : "root",
+                TextUtil::literal,
+                setting -> {
+                    TextFieldWidget widget = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, 120, 20, setting.getName());
+                    widget.setMaxLength(128);
+                    widget.setTextPredicate(string -> string != null && (string.startsWith("root") || string.isEmpty()));
+                    widget.setText(setting.get());
+                    widget.setChangedListener(string -> {
+                        // allow for backspace / ctrl + x
+                        if (string.isEmpty()) {
+                            widget.setText("root");
+                            return;
+                        }
+                        setting.set(string);
+                        for (String suggestion : new String[]{
+                                "root.gameRenderer.level.entities",
+                                "root.tick.level.entities.blockEntities"
+                        }) {
+                            if (string.length() > 5 && !suggestion.equals(string) && suggestion.startsWith(string)) {
+                                widget.setSuggestion(suggestion.replaceFirst(string, "").split("\\.")[0]);
+                                return;
+                            }
+                        }
+                        widget.setSuggestion(null);
+                    });
+                    return widget;
+                })
+        ).disable();
 
         // More Settings
-        this.register("perspective", "more", CyclingOption.create("standardsettings.options.perspective", Perspective.values(), value -> TextUtil.translatable("standardsettings.options.perspective." + value.ordinal()), GameOptions::getPerspective, (options, option, value) -> options.setPerspective(value))).disable();
-        this.register("f1", "more", CyclingOption.create("standardsettings.options.f1", options -> options.hudHidden, (options, option, value) -> options.hudHidden = value)).disable();
-        this.register("sneaking", "more", CyclingOption.create("standardsettings.options.sneaking", StandardGameOptions::getSneaking, (options, option, value) -> StandardGameOptions.setSneaking(options, value))).disable();
-        this.register("sprinting", "more", CyclingOption.create("standardsettings.options.sprinting", StandardGameOptions::getSprinting, (options, option, value) -> StandardGameOptions.setSprinting(options, value))).disable();
+        this.register(CustomStandardSetting.ofEnum("perspective", "more", options::getPerspective, options::setPerspective, Perspective.class)).disable();
+        this.register("f1", "more", () -> options.hudHidden, value -> options.hudHidden = value).disable();
+        this.register("sneaking", "more", options.sneakKey::isPressed, value -> {
+            if (options.getSneakToggled().getValue() && options.sneakKey.isPressed() != value) {
+                // pressing the sneak key toggles it
+                options.sneakKey.setPressed(true);
+            }
+        }).disable();
+        this.register("sprinting", "more", options.sprintKey::isPressed, value -> {
+            if (options.getSprintToggled().getValue() && options.sprintKey.isPressed() != value) {
+                // pressing the sprint key toggles it
+                options.sprintKey.setPressed(true);
+            }
+        }).disable();
 
         // OnWorldJoin Settings
-        this.onWorldJoin(new DoubleOptionStandardSetting("fovOnWorldJoin", "onWorldJoin", this.optionsOnWorldJoin, Option.FOV)).disable();
-        this.onWorldJoin(new DoubleOptionStandardSetting("renderDistanceOnWorldJoin", "onWorldJoin", this.optionsOnWorldJoin, Option.RENDER_DISTANCE)).disable();
-        this.onWorldJoin(new DoubleOptionStandardSetting("entityDistanceScalingOnWorldJoin", "onWorldJoin", this.optionsOnWorldJoin, Option.ENTITY_DISTANCE_SCALING)).disable();
-        this.onWorldJoin(new CyclingOptionStandardSetting<Integer>("guiScaleOnWorldJoin", "options.video", this.options, (CyclingOption<Integer>) Option.GUI_SCALE) {
+        this.onWorldJoin(new SimpleOptionStandardSetting<>("fovOnWorldJoin", "onWorldJoin", options.getFov())).disable();
+        this.onWorldJoin(new SimpleOptionStandardSetting<>("renderDistanceOnWorldJoin", "onWorldJoin", options.getViewDistance())).disable();
+        this.onWorldJoin(new SimpleOptionStandardSetting<>("entityDistanceScalingOnWorldJoin", "onWorldJoin", options.getEntityDistanceScaling())).disable();
+        this.onWorldJoin(new SimpleOptionStandardSetting<>("guiScaleOnWorldJoin", "onWorldJoin", options.getGuiScale()) {
             @Override
-            public void set(GameOptions options, Integer value) {
-                options.guiScale = Math.max(0, value);
-            }
-
-            @Override
-            protected Integer fromInt(int i) {
-                return i;
-            }
-
-            @Override
-            protected int toInt(Integer value) {
-                return value;
+            public void set(SimpleOption<Integer> option, Integer value) {
+                // bypass vanillas dynamic bounds enforcing for gui scale
+                //noinspection unchecked
+                ((SimpleOptionAccessor<Integer>) (Object) option).standardsettings$setValue(Math.max(0, value));
             }
         });
     }
 
-    private DoubleOptionStandardSetting register(String id, String category, DoubleOption option) {
-        return this.register(new DoubleOptionStandardSetting(id, category, this.options, option));
+    private <T> SimpleOptionStandardSetting<T> register(String id, String category, SimpleOption<T> option) {
+        return this.register(new SimpleOptionStandardSetting<>(id, category, option));
     }
 
-    private BooleanOptionStandardSetting registerBoolean(String id, String category, CyclingOption<Boolean> option) {
-        return this.register(new BooleanOptionStandardSetting(id, category, this.options, option));
-    }
-
-    private <T extends Enum<T>> EnumOptionStandardSetting<T> registerEnum(String id, String category, CyclingOption<T> option, Class<T> enumClass) {
-        return this.register(new EnumOptionStandardSetting<>(id, category, this.options, option, enumClass));
-    }
-
-    private <T> CyclingOptionStandardSetting<T> register(String id, String category, CyclingOption<T> option) {
-        return this.register(new CyclingOptionStandardSetting<>(id, category, this.options, option));
-    }
-
-    private StringOptionStandardSetting register(String id, String category, Function<GameOptions, String> getter, BiConsumer<GameOptions, String> setter, Function<StringOptionStandardSetting, Text> getText, Function<StringOptionStandardSetting, ClickableWidget> createMainWidget) {
-        return this.register(new StringOptionStandardSetting(id, category, this.options, getter, setter, getText, createMainWidget));
+    private CustomStandardSetting<Boolean> register(String id, String category, Supplier<Boolean> getter, Consumer<Boolean> setter) {
+        return this.register(CustomStandardSetting.ofBoolean(id, category, getter, setter));
     }
 
     private <T extends StandardSetting<?>> T register(T standardSetting) {
@@ -395,7 +486,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         if ("toggleAll".equals(field.getName())) {
             return new SpeedrunConfigAPI.CustomOption.Builder<Boolean>(this, this, field, idPrefix)
                     .createWidget((option, innerConfig, configStorage, optionField) ->
-                            new ButtonWidget(0, 0, 150, 20, ScreenTexts.onOrOff(!option.get()), this::confirmToggleAll)
+                            ButtonWidget.builder(ScreenTexts.onOrOff(!option.get()), this::confirmToggleAll).dimensions(0, 0, 150, 20).build()
                     ).build();
         }
         return SpeedrunConfig.super.parseField(field, config, idPrefix);

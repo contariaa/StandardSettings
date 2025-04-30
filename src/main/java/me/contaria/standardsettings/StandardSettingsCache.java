@@ -34,11 +34,11 @@ public class StandardSettingsCache {
 
         private Entry(StandardSetting<T> setting) {
             this.setting = setting;
-            this.value = setting.getOption();
+            this.value = setting.getVanilla();
         }
 
         public void load() {
-            this.setting.setOption(this.value);
+            this.setting.setVanilla(this.value);
         }
 
         @Override
