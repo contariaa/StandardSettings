@@ -55,7 +55,7 @@ public class StandardSettings {
         MinecraftClient client = MinecraftClient.getInstance();
         Window window = client.getWindow();
 
-        window.applyVideoMode();
+        window.applyFullscreenVideoMode();
 
         if (window.getScaleFactor() != client.options.getGuiScale().getValue()) {
             client.onResolutionChanged();

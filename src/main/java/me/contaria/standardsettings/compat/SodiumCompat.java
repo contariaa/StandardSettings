@@ -1,6 +1,6 @@
 package me.contaria.standardsettings.compat;
 
-import me.jellysquid.mods.sodium.client.SodiumClientMod;
+import net.caffeinemc.mods.sodium.client.SodiumClientMod;
 
 public class SodiumCompat {
 

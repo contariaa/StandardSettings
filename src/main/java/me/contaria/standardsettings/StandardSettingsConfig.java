@@ -21,12 +21,12 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.option.*;
-import net.minecraft.client.render.entity.PlayerModelPart;
 import net.minecraft.client.resource.language.LanguageDefinition;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.Monitor;
 import net.minecraft.client.util.VideoMode;
 import net.minecraft.client.util.Window;
+import net.minecraft.entity.player.PlayerModelPart;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.profiler.ProfileResult;
@@ -96,8 +96,8 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register(CustomStandardSetting.ofString(
                 "fullscreenResolution",
                 "options.video",
-                () -> MinecraftClient.getInstance().getWindow().getVideoMode().map(VideoMode::asString).orElse(null),
-                value -> MinecraftClient.getInstance().getWindow().setVideoMode(VideoMode.fromString(value)),
+                () -> MinecraftClient.getInstance().getWindow().getFullscreenVideoMode().map(VideoMode::asString).orElse(null),
+                value -> MinecraftClient.getInstance().getWindow().setFullscreenVideoMode(VideoMode.fromString(value)),
                 value -> VideoMode.fromString(value).map(mode -> TextUtil.literal(mode.toString())).orElse(TextUtil.translatable("options.fullscreen.current")),
                 setting -> {
                     // see FullScreenOption and VideoOptionsScreen#init
