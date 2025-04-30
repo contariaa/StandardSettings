@@ -50,7 +50,7 @@ public abstract class LanguageOptionsScreenMixin extends GameOptionsScreen {
     }
 
     @WrapOperation(
-            method = "method_19820",
+            method = "onDone",
             at = @At(
                     value = "INVOKE",
                     target = "Ljava/lang/String;equals(Ljava/lang/Object;)Z",

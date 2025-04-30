@@ -35,13 +35,11 @@ public abstract class SimpleOptionMixin<T> implements StandardSettingsSimpleOpti
 
     @Override
     public SimpleOption<T> standardsettings$copy() {
-        return new SimpleOption<>(this.key, SimpleOption.emptyTooltip(), this.valueTextGetter, this.callbacks, this.defaultValue, value -> {
-        });
+        return new SimpleOption<>(this.key, SimpleOption.emptyTooltip(), this.valueTextGetter, this.callbacks, this.defaultValue, value -> {});
     }
 
     @Override
     public SimpleOption<T> standardsettings$copy(SimpleOption.Callbacks<T> callbacks) {
-        return new SimpleOption<>(this.key, SimpleOption.emptyTooltip(), this.valueTextGetter, callbacks, this.defaultValue, value -> {
-        });
+        return new SimpleOption<>(this.key, SimpleOption.emptyTooltip(), this.valueTextGetter, callbacks, this.defaultValue, value -> {});
     }
 }

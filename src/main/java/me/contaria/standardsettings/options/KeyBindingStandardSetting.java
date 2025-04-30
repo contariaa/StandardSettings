@@ -4,11 +4,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.StandardSettings;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import org.jetbrains.annotations.NotNull;
@@ -82,9 +82,9 @@ public class KeyBindingStandardSetting extends StandardSetting<InputUtil.Key> {
     public @NotNull ClickableWidget createMainWidget() {
         return new ButtonWidget(0, 0, 120, 20, this.getText(), button -> StandardSettings.config.setFocusedKeyBinding(this), Supplier::get) {
             @Override
-            public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+            public void render(DrawContext context, int mouseX, int mouseY, float delta) {
                 this.setMessage(KeyBindingStandardSetting.this.getText());
-                super.render(matrices, mouseX, mouseY, delta);
+                super.render(context, mouseX, mouseY, delta);
             }
         };
     }
