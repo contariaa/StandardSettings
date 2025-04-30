@@ -215,6 +215,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("showAutosaveIndicator", "options.video", options.getShowAutosaveIndicator());
         this.register("glintSpeed", "options.video", options.getGlintSpeed());
         this.register("glintStrength", "options.video", options.getGlintStrength());
+        this.register("menuBackgroundBlurriness", "options.video", options.getMenuBackgroundBlurriness());
         this.register("entityCulling", "options.video", () -> StandardSettings.HAS_SODIUM && SodiumCompat.getEntityCulling(), value -> {
             if (StandardSettings.HAS_SODIUM) {
                 SodiumCompat.setEntityCulling(value);
@@ -285,6 +286,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
                 )).size(120, 20).build()
         ));
         this.register("forceUnicodeFont", "options.language", options.getForceUnicodeFont());
+        this.register("japaneseGlyphVariants", "options.language", options.getJapaneseGlyphVariants());
 
         // Mouse Settings
         this.register("mouseSensitivity", "options.mouse_settings", options.getMouseSensitivity());

@@ -82,9 +82,9 @@ public class KeyBindingStandardSetting extends StandardSetting<InputUtil.Key> {
     public @NotNull ClickableWidget createMainWidget() {
         return new ButtonWidget(0, 0, 120, 20, this.getText(), button -> StandardSettings.config.setFocusedKeyBinding(this), Supplier::get) {
             @Override
-            public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+            public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
                 this.setMessage(KeyBindingStandardSetting.this.getText());
-                super.render(context, mouseX, mouseY, delta);
+                super.renderWidget(context, mouseX, mouseY, delta);
             }
         };
     }

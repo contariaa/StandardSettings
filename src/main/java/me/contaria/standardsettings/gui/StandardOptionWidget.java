@@ -44,7 +44,7 @@ public class StandardOptionWidget extends ClickableWidget implements ParentEleme
     }
 
     @Override
-    public void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         this.mainWidget.setPosition(this.getX(), this.getY());
         this.mainWidget.render(context, mouseX, mouseY, delta);
         this.toggle.setPosition(this.getX() + this.mainWidget.getWidth() + 5, this.getY());

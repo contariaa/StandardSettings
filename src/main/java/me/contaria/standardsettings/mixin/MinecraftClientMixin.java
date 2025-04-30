@@ -5,8 +5,8 @@ import me.contaria.standardsettings.StandardSettings;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.screen.GameMenuScreen;
-import net.minecraft.client.gui.screen.LevelLoadingScreen;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.world.LevelLoadingScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.resource.ResourcePackManager;
 import net.minecraft.server.SaveLoader;
@@ -30,13 +30,13 @@ public abstract class MinecraftClientMixin {
     public abstract boolean isWindowFocused();
 
     @Shadow
-    public abstract void openPauseMenu(boolean pause);
+    public abstract void openGameMenu(boolean pause);
 
     @Inject(
             method = "startIntegratedServer",
             at = @At("HEAD")
     )
-    private void reset(String levelName, LevelStorage.Session session, ResourcePackManager dataPackManager, SaveLoader saveLoader, boolean newWorld, CallbackInfo ci) {
+    private void reset(LevelStorage.Session session, ResourcePackManager dataPackManager, SaveLoader saveLoader, boolean newWorld, CallbackInfo ci) {
         if (!MinecraftClient.getInstance().isOnThread()) {
             return;
         }
@@ -46,7 +46,7 @@ public abstract class MinecraftClientMixin {
                 StandardSettings.reset();
             }
         } else {
-            StandardSettings.loadCache(levelName);
+            StandardSettings.loadCache(session.getDirectoryName());
         }
 
         StandardSettings.resetPendingActions();
@@ -56,12 +56,12 @@ public abstract class MinecraftClientMixin {
             method = "startIntegratedServer",
             at = @At("TAIL")
     )
-    private void onWorldJoin(String levelName, LevelStorage.Session session, ResourcePackManager dataPackManager, SaveLoader saveLoader, boolean newWorld, CallbackInfo ci) {
+    private void onWorldJoin(LevelStorage.Session session, ResourcePackManager dataPackManager, SaveLoader saveLoader, boolean newWorld, CallbackInfo ci) {
         if (!MinecraftClient.getInstance().isOnThread()) {
             return;
         }
         if (newWorld) {
-            StandardSettings.saveToWorldFile(levelName);
+            StandardSettings.saveToWorldFile(session.getDirectoryName());
             if (StandardSettings.isEnabled()) {
                 if (this.isWindowFocused()) {
                     StandardSettings.onWorldJoin();
@@ -72,7 +72,7 @@ public abstract class MinecraftClientMixin {
             }
         }
 
-        StandardSettings.lastWorld = levelName;
+        StandardSettings.lastWorld = session.getDirectoryName();
     }
 
     @Inject(
@@ -105,7 +105,7 @@ public abstract class MinecraftClientMixin {
             if (StandardSettings.config.autoF3EscDelay > 0) {
                 StandardSettings.config.autoF3EscDelay--;
             } else {
-                this.openPauseMenu(true);
+                this.openGameMenu(true);
             }
         }
     }

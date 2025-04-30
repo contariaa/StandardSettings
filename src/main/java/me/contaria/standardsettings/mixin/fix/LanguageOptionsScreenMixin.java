@@ -4,16 +4,17 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import me.contaria.standardsettings.gui.StandardSettingsLanguageScreen;
-import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.option.GameOptionsScreen;
 import net.minecraft.client.gui.screen.option.LanguageOptionsScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.DirectionalLayoutWidget;
+import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Slice;
 
 @Mixin(LanguageOptionsScreen.class)
 public abstract class LanguageOptionsScreenMixin extends GameOptionsScreen {
@@ -23,30 +24,18 @@ public abstract class LanguageOptionsScreenMixin extends GameOptionsScreen {
     }
 
     @WrapWithCondition(
-            method = "init",
+            method = "initFooter",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/screen/option/LanguageOptionsScreen;addDrawableChild(Lnet/minecraft/client/gui/Element;)Lnet/minecraft/client/gui/Element;",
+                    target = "Lnet/minecraft/client/gui/widget/DirectionalLayoutWidget;add(Lnet/minecraft/client/gui/widget/Widget;)Lnet/minecraft/client/gui/widget/Widget;",
                     ordinal = 0
+            ),
+            slice = @Slice(
+                    from = @At(value = "CONSTANT", args = "stringValue=options.font")
             )
     )
-    private boolean doNotAddForceUnicodeFontButton(LanguageOptionsScreen screen, Element element) {
+    private boolean doNotAddFontOptionsButton(DirectionalLayoutWidget layout, Widget widget) {
         return !this.isStandardSettings();
-    }
-
-    @WrapOperation(
-            method = "init",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/widget/ButtonWidget$Builder;dimensions(IIII)Lnet/minecraft/client/gui/widget/ButtonWidget$Builder;"
-            )
-    )
-    private ButtonWidget.Builder moveDoneButtonToCenter(ButtonWidget.Builder builder, int x, int y, int width, int height, Operation<ButtonWidget.Builder> original) {
-        if (this.isStandardSettings()) {
-            x = this.width / 2 - 100;
-            width = 200;
-        }
-        return original.call(builder, x, y, width, height);
     }
 
     @WrapOperation(
