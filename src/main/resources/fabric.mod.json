@@ -29,7 +29,7 @@
 	"accessWidener": "standardsettings.accesswidener",
 	"depends": {
 		"fabricloader": ">=0.16.0",
-		"minecraft": "1.21.1",
+		"minecraft": "1.21.4",
 		"java": ">=21",
 		"speedrunapi": ">=2.0-beta.1"
 	},

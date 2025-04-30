@@ -11,7 +11,7 @@ import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.compat.SodiumCompat;
 import me.contaria.standardsettings.gui.StandardSettingsLanguageScreen;
 import me.contaria.standardsettings.interfaces.StandardSettingsSimpleOption;
-import me.contaria.standardsettings.mixin.accessors.MinecraftClientAccessor;
+import me.contaria.standardsettings.mixin.accessors.PieChartAccessor;
 import me.contaria.standardsettings.mixin.accessors.SimpleOptionAccessor;
 import me.contaria.standardsettings.options.*;
 import net.minecraft.client.MinecraftClient;
@@ -153,7 +153,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("ao", "options.video", options.getAo());
         this.register("maxFps", "options.video", options.getMaxFps());
         this.register("enableVsync", "options.video", options.getEnableVsync());
-        this.register("bobView", "options.video", options.getBobView());
+        this.register("inactivityFpsLimit", "options.video", options.getInactivityFpsLimit());
         this.register(new SimpleOptionStandardSetting<>("guiScale", "options.video", options.getGuiScale()) {
             @Override
             public void set(SimpleOption<Integer> option, Integer value) {
@@ -216,6 +216,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("glintSpeed", "options.video", options.getGlintSpeed());
         this.register("glintStrength", "options.video", options.getGlintStrength());
         this.register("menuBackgroundBlurriness", "options.video", options.getMenuBackgroundBlurriness());
+        this.register("bobView", "options.video", options.getBobView());
         this.register("entityCulling", "options.video", () -> StandardSettings.HAS_SODIUM && SodiumCompat.getEntityCulling(), value -> {
             if (StandardSettings.HAS_SODIUM) {
                 SodiumCompat.setEntityCulling(value);
@@ -335,6 +336,8 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("hideLightningFlashes", "options.accessibility.title", options.getHideLightningFlashes());
         this.register("darkMojangStudiosBackground", "options.accessibility.title", options.getMonochromeLogo());
         this.register("panoramaScrollSpeed", "options.accessibility.title", options.getPanoramaSpeed());
+        this.register("rotateWithMinecart", "options.accessibility.title", options.getRotateWithMinecart());
+        this.register("highContrastBlockOutline", "options.accessibility.title", options.getHighContrastBlockOutline());
 
         // Telemetry Data
         this.register("telemetryOptInExtra", "options.telemetry", options.getTelemetryOptInExtra());
@@ -353,8 +356,8 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         });
         this.register(CustomStandardSetting.ofString(
                 "pieDirectory", "f3",
-                () -> ProfileResult.getHumanReadableName(((MinecraftClientAccessor) MinecraftClient.getInstance()).standardsettings$getOpenProfilerSection()),
-                value -> ((MinecraftClientAccessor) MinecraftClient.getInstance()).standardsettings$setOpenProfilerSection(value),
+                () -> ProfileResult.getHumanReadableName(((PieChartAccessor) MinecraftClient.getInstance().getDebugHud().getPieChart()).standardsettings$getCurrentPath()),
+                value -> ((PieChartAccessor) MinecraftClient.getInstance().getDebugHud().getPieChart()).standardsettings$setCurrentPath(value),
                 value -> value.startsWith("root") ? value.replace('.', '\u001e').trim() : "root",
                 TextUtil::literal,
                 setting -> {

@@ -6,7 +6,8 @@
     "MinecraftClientMixin",
     "SimpleOptionMixin",
     "accessors.BakedModelManagerAccessor",
-    "accessors.MinecraftClientAccessor",
+    "accessors.CyclingButtonWidgetAccessor",
+    "accessors.PieChartAccessor",
     "accessors.SimpleOptionAccessor",
     "fix.KeyboardMixin",
     "fix.LanguageOptionsScreenMixin",
@@ -14,8 +15,5 @@
   ],
   "injectors": {
     "defaultRequire": 1
-  },
-  "mixins": [
-    "accessors.CyclingButtonWidgetAccessor"
-  ]
+  }
 }

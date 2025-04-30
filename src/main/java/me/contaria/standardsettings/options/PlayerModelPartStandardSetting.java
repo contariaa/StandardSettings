@@ -39,7 +39,7 @@ public class PlayerModelPartStandardSetting extends StandardSetting<Boolean> {
 
     @Override
     public void setVanilla(Boolean value) {
-        MinecraftClient.getInstance().options.togglePlayerModelPart(this.playerModelPart, value);
+        MinecraftClient.getInstance().options.setPlayerModelPart(this.playerModelPart, value);
     }
 
     @Override
