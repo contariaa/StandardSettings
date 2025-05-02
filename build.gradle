@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.5-SNAPSHOT'
+	id 'fabric-loom' version '1.9-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -24,10 +24,10 @@ dependencies {
 
 	// SpeedrunAPI
 	// check for the latest versions at https://jitpack.io/#kingcontaria/speedrunapi
-	modImplementation "com.github.KingContaria:SpeedrunAPI:8497ae7479"
+	modImplementation "com.github.KingContaria:SpeedrunAPI:ce922322ff"
 
 	// check for the latest versions at https://jitpack.io/#Minecraft-Java-Edition-Speedrunning/sodium
-	modCompileOnly "com.github.Minecraft-Java-Edition-Speedrunning:sodium:7e4905f134"
+	modCompileOnly "com.github.Minecraft-Java-Edition-Speedrunning:sodium:60faa665fe"
 }
 
 processResources {
