@@ -24,7 +24,7 @@ dependencies {
 
 	// SpeedrunAPI
 	// check for the latest versions at https://jitpack.io/#kingcontaria/speedrunapi
-	modImplementation "com.github.KingContaria:SpeedrunAPI:a44e74c5fd"
+	modImplementation "com.github.KingContaria:SpeedrunAPI:0a85f9bd09"
 
 	// check for the latest versions at https://jitpack.io/#Minecraft-Java-Edition-Speedrunning/sodium
 	modCompileOnly "com.github.Minecraft-Java-Edition-Speedrunning:sodium:b1f819451e"
