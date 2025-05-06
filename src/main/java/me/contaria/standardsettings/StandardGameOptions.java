@@ -4,6 +4,8 @@ import me.contaria.standardsettings.compat.SodiumCompat;
 import me.contaria.standardsettings.mixin.accessors.MinecraftClientAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.resource.language.LanguageDefinition;
+import net.minecraft.client.resource.language.LanguageManager;
 import net.minecraft.client.util.VideoMode;
 import net.minecraft.util.profiler.ProfileResult;
 
@@ -31,6 +33,22 @@ public class StandardGameOptions extends GameOptions {
 
     @Override
     public void onPlayerModelPartChange() {
+    }
+
+    public static String getLanguage(GameOptions options) {
+        if (options instanceof StandardGameOptions) {
+            return options.language;
+        }
+        return MinecraftClient.getInstance().getLanguageManager().getLanguage().getCode();
+    }
+
+    public static void setLanguage(GameOptions options, String value) {
+        LanguageManager manager = MinecraftClient.getInstance().getLanguageManager();
+        LanguageDefinition language = manager.getLanguage(value);
+        if (language == null) {
+            language = manager.getLanguage();
+        }
+        options.language = language.getCode();
     }
 
     public static String getFullscreenResolution(GameOptions options) {
