@@ -172,7 +172,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.registerBoolean("showSubtitles", "options.sounds", Option.SUBTITLES);
 
         // Language
-        this.register("language", "options.language", options -> options.language, (options, value) -> options.language = value, option -> TextUtil.literal(MinecraftClient.getInstance().getLanguageManager().getLanguage(option.get()).toString()), option -> new ButtonWidget(0, 0, 120, 20, option.getText(), button -> MinecraftClient.getInstance().setScreen(new LanguageOptionsScreen(MinecraftClient.getInstance().currentScreen, options, MinecraftClient.getInstance().getLanguageManager()))));
+        this.register("language", "options.language", StandardGameOptions::getLanguage, StandardGameOptions::setLanguage, option -> TextUtil.literal(MinecraftClient.getInstance().getLanguageManager().getLanguage(option.get()).toString()), option -> new ButtonWidget(0, 0, 120, 20, option.getText(), button -> MinecraftClient.getInstance().setScreen(new LanguageOptionsScreen(MinecraftClient.getInstance().currentScreen, options, MinecraftClient.getInstance().getLanguageManager()))));
         this.registerBoolean("forceUnicodeFont", "options.language", Option.FORCE_UNICODE_FONT);
 
         // Mouse Settings
