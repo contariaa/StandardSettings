@@ -1,5 +1,6 @@
 package me.contaria.standardsettings;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.Codec;
 import me.contaria.speedrunapi.config.SpeedrunConfigAPI;
@@ -571,5 +572,15 @@ public class StandardSettingsConfig implements SpeedrunConfig {
     public @NotNull Screen createConfigScreen(Screen parent) {
         this.update();
         return SpeedrunConfig.super.createConfigScreen(parent);
+    }
+
+    @Override
+    public void handleLoadException(Exception e, SpeedrunOption<?> option, JsonElement jsonElement) throws Exception {
+        if (option instanceof StandardSetting) {
+            // fail-soft for standardsettings as their encoding format can change between minecraft versions
+            StandardSettings.LOGGER.warn("Failed to load the value for standardsetting {}: {}", option.getID(), jsonElement);
+            return;
+        }
+        SpeedrunConfig.super.handleLoadException(e, option, jsonElement);
     }
 }
