@@ -273,8 +273,8 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         // Language
         this.register(CustomStandardSetting.ofString(
                 "language", "options.language",
-                () -> MinecraftClient.getInstance().getLanguageManager().getLanguage(),
-                value -> MinecraftClient.getInstance().options.language = value,
+                () -> options.language,
+                value -> options.language = value,
                 value -> {
                     LanguageDefinition language = MinecraftClient.getInstance().getLanguageManager().getLanguage(value);
                     if (language != null) {
