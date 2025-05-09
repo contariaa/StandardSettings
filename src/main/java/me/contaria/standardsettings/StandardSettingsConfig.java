@@ -22,6 +22,8 @@ import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.option.*;
 import net.minecraft.client.render.entity.PlayerModelPart;
+import net.minecraft.client.resource.language.LanguageDefinition;
+import net.minecraft.client.resource.language.LanguageManager;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.Monitor;
 import net.minecraft.client.util.VideoMode;
@@ -196,7 +198,14 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         });
 
         // Language
-        this.register("language", "options.language", StandardGameOptions::getLanguage, StandardGameOptions::setLanguage, option -> TextUtil.literal(MinecraftClient.getInstance().getLanguageManager().getLanguage(option.get()).toString()), option -> new ButtonWidget(0, 0, 120, 20, option.getText(), button -> MinecraftClient.getInstance().setScreen(new LanguageOptionsScreen(MinecraftClient.getInstance().currentScreen, options, MinecraftClient.getInstance().getLanguageManager()))));
+        this.register("language", "options.language", options -> options.language, (options, value) -> options.language = value, option -> {
+            LanguageManager manager = MinecraftClient.getInstance().getLanguageManager();
+            LanguageDefinition language = manager.getLanguage(option.get());
+            if (language == null) {
+                language = manager.getLanguage("en_us");
+            }
+            return TextUtil.literal(language.toString());
+        }, option -> new ButtonWidget(0, 0, 120, 20, option.getText(), button -> MinecraftClient.getInstance().setScreen(new LanguageOptionsScreen(MinecraftClient.getInstance().currentScreen, options, MinecraftClient.getInstance().getLanguageManager()))));
         this.registerBoolean("forceUnicodeFont", "options.language", Option.FORCE_UNICODE_FONT);
 
         // Mouse Settings
