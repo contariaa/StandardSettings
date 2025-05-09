@@ -5,6 +5,7 @@ import me.contaria.standardsettings.mixin.accessors.SpriteAtlasTextureAccessor;
 import me.contaria.standardsettings.options.StandardSetting;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.options.KeyBinding;
+import net.minecraft.client.resource.language.LanguageDefinition;
 import net.minecraft.client.resource.language.LanguageManager;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.Window;
@@ -59,7 +60,11 @@ public class StandardSettings {
 
         LanguageManager languageManager = client.getLanguageManager();
         if (!languageManager.getLanguage().getCode().equals(client.options.language)) {
-            languageManager.setLanguage(languageManager.getLanguage(client.options.language));
+            LanguageDefinition language = languageManager.getLanguage(client.options.language);
+            if (language == null) {
+                language = languageManager.getLanguage(client.options.language = "en_us");
+            }
+            languageManager.setLanguage(language);
             languageManager.apply(client.getResourceManager());
         }
 
