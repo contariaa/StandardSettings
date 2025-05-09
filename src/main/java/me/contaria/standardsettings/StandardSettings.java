@@ -63,6 +63,9 @@ public class StandardSettings {
 
         LanguageManager languageManager = client.getLanguageManager();
         if (!languageManager.getLanguage().equals(client.options.language)) {
+            if (languageManager.getLanguage(client.options.language) == null) {
+                client.options.language = "en_us";
+            }
             languageManager.setLanguage(client.options.language);
             languageManager.reload(client.getResourceManager());
         }
