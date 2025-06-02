@@ -26,6 +26,7 @@ public class StandardSettingsCache {
         for (Entry<?> cacheEntry : this.cache) {
             cacheEntry.load();
         }
+        StandardSettings.updateSettings();
     }
 
     protected static class Entry<T> {
