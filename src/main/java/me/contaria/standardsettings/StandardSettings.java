@@ -51,7 +51,7 @@ public class StandardSettings {
         LOGGER.info("Loaded StandardSettings on World Join");
     }
 
-    private static void updateSettings() {
+    public static void updateSettings() {
         MinecraftClient client = MinecraftClient.getInstance();
         Window window = client.getWindow();
 
