@@ -12,6 +12,15 @@
 			}
 		}
 	],
+	"contributors": [
+		"tildejustin",
+		"Slackow",
+		"knawk",
+		"DesktopFolder",
+		"DuncanRuns",
+		"tesselslate",
+		"maskers"
+	],
 	"contact": {
 		"sources": "https://github.com/KingContaria/StandardSettings",
 		"issues": "https://github.com/KingContaria/StandardSettings/issues"
