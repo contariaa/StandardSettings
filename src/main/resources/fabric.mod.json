@@ -8,13 +8,13 @@
 		{
 			"name": "contaria",
 			"contact": {
-				"homepage": "https://github.com/KingContaria/"
+				"homepage": "https://github.com/contariaa/"
 			}
 		}
 	],
 	"contact": {
-		"sources": "https://github.com/KingContaria/StandardSettings",
-		"issues": "https://github.com/KingContaria/StandardSettings/issues"
+		"sources": "https://github.com/contariaa/StandardSettings",
+		"issues": "https://github.com/contariaa/StandardSettings/issues"
 	},
 	"license": "MIT",
 	"environment": "client",
