@@ -12,6 +12,15 @@
 			}
 		}
 	],
+	"contributors": [
+		"tildejustin",
+		"Slackow",
+		"knawk",
+		"DesktopFolder",
+		"DuncanRuns",
+		"tesselslate",
+		"maskers"
+	],
 	"contact": {
 		"sources": "https://github.com/contariaa/StandardSettings",
 		"issues": "https://github.com/contariaa/StandardSettings/issues"
