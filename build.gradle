@@ -29,8 +29,8 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// SpeedrunAPI
-	// check for the latest versions at https://jitpack.io/#kingcontaria/speedrunapi
-	modImplementation "com.github.KingContaria:SpeedrunAPI:f6b20914ef"
+	// check for the latest versions at https://jitpack.io/#contariaa/speedrunapi
+	modImplementation "com.github.contariaa:SpeedrunAPI:50e3af870f"
 
 	// check for the latest versions at https://modrinth.com/mod/sodium/versions
 	modCompileOnly "maven.modrinth:sodium:mc1.21.4-0.6.13-fabric"
