@@ -23,8 +23,8 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// SpeedrunAPI
-	// check for the latest versions at https://jitpack.io/#kingcontaria/speedrunapi
-	modImplementation "com.github.KingContaria:SpeedrunAPI:9b11f2cb8a"
+	// check for the latest versions at https://jitpack.io/#contariaa/speedrunapi
+	modImplementation "com.github.contariaa:SpeedrunAPI:70dd4ec9d9"
 
 	// check for the latest versions at https://jitpack.io/#Minecraft-Java-Edition-Speedrunning/sodium
 	modCompileOnly "com.github.Minecraft-Java-Edition-Speedrunning:sodium:b1f819451e"
