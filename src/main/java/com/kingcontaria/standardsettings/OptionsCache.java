@@ -4,6 +4,7 @@ import com.kingcontaria.standardsettings.mixins.accessors.GameOptionsAccessor;
 import com.kingcontaria.standardsettings.mixins.accessors.PieChartAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.*;
+import net.minecraft.client.sound.MusicTracker;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.VideoMode;
 import net.minecraft.client.util.Window;
@@ -56,6 +57,7 @@ public class OptionsCache {
     private GraphicsMode graphicsMode;
     private boolean ao;
     private CloudRenderMode cloudRenderMode;
+    private int cloudRenderDistance;
     private AttackIndicator attackIndicator;
     private String language;
     private ChatVisibility chatVisibility;
@@ -82,6 +84,8 @@ public class OptionsCache {
     private boolean showAutosaveIndicator;
     private boolean onlyShowSecureChat;
     private int menuBackgroundBlurriness;
+    private MusicTracker.MusicFrequency musicFrequency;
+    private boolean showNowPlayingToast;
     private Optional<Boolean> entityCulling;
     private boolean sneaking;
     private boolean sprinting;
@@ -139,6 +143,7 @@ public class OptionsCache {
         graphicsMode = options.getGraphicsMode().getValue();
         ao = options.getAo().getValue();
         cloudRenderMode = options.getCloudRenderMode().getValue();
+        cloudRenderDistance = options.getCloudRenderDistance().getValue();
         attackIndicator = options.getAttackIndicator().getValue();
         language = client.getLanguageManager().getLanguage();
         chatVisibility = options.getChatVisibility().getValue();
@@ -165,6 +170,8 @@ public class OptionsCache {
         showAutosaveIndicator = options.getShowAutosaveIndicator().getValue();
         onlyShowSecureChat = options.getOnlyShowSecureChat().getValue();
         menuBackgroundBlurriness = options.getMenuBackgroundBlurriness().getValue();
+        musicFrequency = options.getMusicFrequency().getValue();
+        showNowPlayingToast = options.getShowNowPlayingToast().getValue();
         entityCulling = StandardSettings.getEntityCulling();
         sneaking = options.sneakKey.isPressed();
         sprinting = options.sprintKey.isPressed();
@@ -242,6 +249,7 @@ public class OptionsCache {
         options.getGraphicsMode().setValue(graphicsMode);
         options.getAo().setValue(ao);
         options.getCloudRenderMode().setValue(cloudRenderMode);
+        options.getCloudRenderDistance().setValue(cloudRenderDistance);
         options.getAttackIndicator().setValue(attackIndicator);
         if (!language.equals(options.language)) {
             client.getLanguageManager().setLanguage(language);
@@ -280,6 +288,8 @@ public class OptionsCache {
         options.getShowAutosaveIndicator().setValue(showAutosaveIndicator);
         options.getOnlyShowSecureChat().setValue(onlyShowSecureChat);
         options.getMenuBackgroundBlurriness().setValue(menuBackgroundBlurriness);
+        options.getMusicFrequency().setValue(musicFrequency);
+        options.getShowNowPlayingToast().setValue(showNowPlayingToast);
         entityCulling.ifPresent(StandardSettings::setEntityCulling);
         if (options.getSneakToggled().getValue() && (sneaking != options.sneakKey.isPressed())) {
             options.sneakKey.setPressed(true);
