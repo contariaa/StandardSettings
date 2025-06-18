@@ -157,8 +157,7 @@ public abstract class MinecraftClientMixin {
     }
 
     // save the world file name of the last world
-    @Dynamic
-    @Inject(method = "disconnect(Lnet/minecraft/client/gui/screen/Screen;)V", at = @At("HEAD"))
+    @Inject(method = "disconnectWithSavingScreen", at = @At("HEAD"))
     private void cacheOptions(CallbackInfo ci) {
         try {
             StandardSettings.lastWorld = StandardSettings.client.getServer().getIconFile().get().getParent().getFileName().toString();

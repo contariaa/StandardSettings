@@ -14,6 +14,7 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.*;
+import net.minecraft.client.sound.MusicTracker;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.VideoMode;
 import net.minecraft.client.util.Window;
@@ -241,6 +242,7 @@ public class StandardSettings {
                         default -> true;
                     });
                     case "renderClouds" -> options.getCloudRenderMode().setValue(strings[1].equals("\"true\"") ? CloudRenderMode.FANCY : strings[1].equals("\"false\"") ? CloudRenderMode.OFF : CloudRenderMode.FAST);
+                    case "cloudRange" -> options.getCloudRenderDistance().setValue(Integer.parseInt(strings[1]));
                     case "attackIndicator" -> options.getAttackIndicator().setValue(AttackIndicator.byId(Integer.parseInt(strings[1])));
                     case "lang" -> {
                         final var languages = client.getLanguageManager().getAllLanguages();
@@ -296,6 +298,8 @@ public class StandardSettings {
                     case "showAutosaveIndicator" -> options.getShowAutosaveIndicator().setValue(Boolean.parseBoolean(strings[1]));
                     case "onlyShowSecureChat" -> options.getOnlyShowSecureChat().setValue(Boolean.parseBoolean(strings[1]));
                     case "menuBackgroundBlurriness" -> options.getMenuBackgroundBlurriness().setValue(Integer.parseInt(strings[1]));
+                    case "musicFrequency" -> options.getMusicFrequency().setValue(MusicTracker.MusicFrequency.valueOf(strings[1]));
+                    case "showNowPlayingToast" -> options.getShowNowPlayingToast().setValue(Boolean.parseBoolean(strings[1]));
                     case "key" -> {
                         for (KeyBinding keyBinding : options.allKeys) {
                             if (string0_split[1].equals(keyBinding.getTranslationKey())) {
@@ -517,11 +521,12 @@ public class StandardSettings {
         RECORDS("Jukebox/Note Blocks"),
         WEATHER("Weather"),
         BLOCKS("Blocks"),
-        HOSTILE("Hostile Creatures"),
-        NEUTRAL("Friendly Creatures"),
+        HOSTILE("Hostile Mobs"),
+        NEUTRAL("Friendly Mobs"),
         PLAYERS("Players"),
         AMBIENT("Ambient/Environment"),
-        VOICE("Voice/Speech");
+        VOICE("Voice/Speech"),
+        UI("UI");
 
         private final String assignedName;
         SoundCategoryName(String name) {
@@ -568,6 +573,7 @@ public class StandardSettings {
                 "graphicsMode:" + options.getGraphicsMode().getValue().getId() + l +
                 "ao:" + options.getAo().getValue() + l +
                 "renderClouds:\"" + (options.getCloudRenderMode().getValue() == CloudRenderMode.FAST ? "fast" : options.getCloudRenderMode().getValue() == CloudRenderMode.FANCY) + "\"" + l +
+                "cloudRange:" + options.getCloudRenderDistance().getValue() + l +
                 "attackIndicator:" + options.getAttackIndicator().getValue().getId() + l +
                 "lang:" + options.language + l +
                 "chatVisibility:" + options.getChatVisibility().getValue().getId() + l +
@@ -594,7 +600,10 @@ public class StandardSettings {
                 "showAutosaveIndicator:" + options.getShowAutosaveIndicator().getValue() + l +
                // "chatPreview:" + options.getChatPreview().getValue() + l +
                 "onlyShowSecureChat:" + options.getOnlyShowSecureChat().getValue() + l +
-                "menuBackgroundBlurriness:" + options.getMenuBackgroundBlurriness().getValue() + l);
+                "menuBackgroundBlurriness:" + options.getMenuBackgroundBlurriness().getValue() + l +
+                "musicFrequency:" + options.getMusicFrequency().getValue().asString() + l +
+                "showNowPlayingToast:" + options.getShowNowPlayingToast().getValue() + l
+        );
         for (KeyBinding keyBinding : options.allKeys) {
             string.append("key_").append(keyBinding.getTranslationKey()).append(":").append(keyBinding.getBoundKeyTranslationKey()).append(l);
         }
