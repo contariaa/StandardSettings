@@ -187,7 +187,7 @@ public class OptionsCache {
         }
         i = 0;
         for (SoundCategory sound : SoundCategory.values()) {
-            soundCategories[i++] = options.getSoundVolume(sound);
+            soundCategories[i++] = options.getCategorySoundVolume(sound);
         }
         i = 0;
         for (PlayerModelPart playerModelPart : PlayerModelPart.values()) {

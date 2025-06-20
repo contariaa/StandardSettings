@@ -436,7 +436,7 @@ public class StandardSettings {
         options.getMouseWheelSensitivity().setValue(check("Scroll Sensitivity", options.getMouseWheelSensitivity().getValue(), 0.01, 10, false));
         for (SoundCategory soundCategory : SoundCategory.values()) {
             final var settingName = "(Music & Sounds) " + SoundCategoryName.valueOf(soundCategory.name()).assignedName;
-            options.getSoundVolumeOption(soundCategory).setValue((double) check(settingName, options.getSoundVolume(soundCategory), 0, 1, true));
+            options.getSoundVolumeOption(soundCategory).setValue((double) check(settingName, options.getCategorySoundVolume(soundCategory), 0, 1, true));
         }
 
         if (renderDistanceOnWorldJoin.isPresent()) {
@@ -608,7 +608,7 @@ public class StandardSettings {
             string.append("key_").append(keyBinding.getTranslationKey()).append(":").append(keyBinding.getBoundKeyTranslationKey()).append(l);
         }
         for (SoundCategory soundCategory : SoundCategory.values()) {
-            string.append("soundCategory_").append(soundCategory.getName()).append(":").append(options.getSoundVolume(soundCategory)).append(l);
+            string.append("soundCategory_").append(soundCategory.getName()).append(":").append(options.getCategorySoundVolume(soundCategory)).append(l);
         }
         for (PlayerModelPart playerModelPart : PlayerModelPart.values()) {
             string.append("modelPart_").append(playerModelPart.getName()).append(":").append(options.isPlayerModelPartEnabled(playerModelPart)).append(l);
