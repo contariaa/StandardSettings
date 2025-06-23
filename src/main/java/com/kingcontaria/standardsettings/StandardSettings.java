@@ -16,6 +16,7 @@ import net.minecraft.client.util.VideoMode;
 import net.minecraft.client.util.Window;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.Arm;
+import net.minecraft.util.math.MathHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,7 +28,7 @@ import java.util.*;
 @Environment(value= EnvType.CLIENT)
 public class StandardSettings {
 
-    public static final int[] version = new int[]{1,2,2,0};
+    public static final int[] version = new int[]{1,2,3, 0};
     public static final Logger LOGGER = LogManager.getLogger();
     public static final MinecraftClient client = MinecraftClient.getInstance();
     public static final GameOptions options = client.options;
@@ -35,6 +36,9 @@ public class StandardSettings {
     public static final File standardoptionsFile = new File(FabricLoader.getInstance().getConfigDir().resolve("standardoptions.txt").toUri());
     public static boolean changeOnWindowActivation = false;
     public static boolean changeOnResize = false;
+    public static boolean f3PauseSoon = false;
+    public static boolean f3PauseOnWorldLoad = false;
+    public static int firstWorldF3PauseDelay = 22;
     private static Optional<Integer> renderDistanceOnWorldJoin = Optional.empty();
     private static Optional<Integer> simulationDistanceOnWorldJoin = Optional.empty();
     private static Optional<Double> entityDistanceScalingOnWorldJoin = Optional.empty();
@@ -45,6 +49,13 @@ public class StandardSettings {
     public static String[] standardoptionsCache;
     public static Map<File, Long> filesLastModifiedMap;
     private static final Field[] entityCulling = new Field[2];
+
+    /**
+     * True only when loading standard settings during a reset.
+     * Used to override Minecraft's stateful clamping of some option values.
+     */
+    private static boolean resetting;
+
 
     public static void load() {
         long start = System.nanoTime();
@@ -205,7 +216,9 @@ public class StandardSettings {
                     case "mouseWheelSensitivity" -> options.getMouseWheelSensitivity().setValue(Double.parseDouble(strings[1]));
                     case "rawMouseInput" -> options.getRawMouseInput().setValue(Boolean.parseBoolean(strings[1]));
                     case "showAutosaveIndicator" -> options.getShowAutosaveIndicator().setValue(Boolean.parseBoolean(strings[1]));
-                    case "chatPreview" -> options.getChatPreview().setValue(Boolean.parseBoolean(strings[1]));
+                    // Option removed to keep compatibility with 1.19.2
+                     case "chatPreview" -> System.out.println("Option \"chatPreview\" not supported in 1.19.x");
+                             //options.getChatPreview().setValue(Boolean.parseBoolean(strings[1]));
                     case "onlyShowSecureChat" -> options.getOnlyShowSecureChat().setValue(Boolean.parseBoolean(strings[1]));
                     case "key" -> {
                         for (KeyBinding keyBinding : options.allKeys) {
@@ -257,6 +270,8 @@ public class StandardSettings {
                     case "simulationDistanceOnWorldJoin" -> simulationDistanceOnWorldJoin = Optional.of(Integer.parseInt(strings[1]));
                     case "entityDistanceScalingOnWorldJoin" -> entityDistanceScalingOnWorldJoin = Optional.of(Double.parseDouble(strings[1]));
                     case "changeOnResize" -> changeOnResize = Boolean.parseBoolean(strings[1]);
+                    case "f3PauseOnWorldLoad" -> f3PauseOnWorldLoad = Boolean.parseBoolean(strings[1]);
+                    case "firstWorldF3PauseDelay" -> firstWorldF3PauseDelay = MathHelper.clamp(Integer.parseInt(strings[1]), 1, 60);
                 }
                 // Some options.txt settings which aren't accessible in vanilla Minecraft and some unnecessary settings (like Multiplayer stuff) are not included.
                 // also has a few extra settings that can be reset that Minecraft doesn't save to options.txt, but are important in speedrunning
@@ -296,6 +311,7 @@ public class StandardSettings {
         simulationDistanceOnWorldJoin = Optional.empty();
         changeOnResize = false;
         changeOnWindowActivation = false;
+        f3PauseOnWorldLoad = false;
     }
 
     // makes sure the values are within the boundaries of vanilla minecraft / the speedrun.com rule set
@@ -404,6 +420,14 @@ public class StandardSettings {
         return value * 100 == (int) (value * 100) ? (int) (value * 100) + "%" : value * 100 + "%";
     }
 
+    public static void setResetting(boolean resetting) {
+        StandardSettings.resetting = resetting;
+    }
+
+    public static boolean isResetting() {
+        return resetting;
+    }
+
     private enum SoundCategoryName {
         MASTER("Master Volume"),
         MUSIC("Music"),
@@ -481,7 +505,7 @@ public class StandardSettings {
                 "mouseWheelSensitivity:" + options.getMouseWheelSensitivity().getValue() + l +
                 "rawMouseInput:" + options.getRawMouseInput().getValue() + l +
                 "showAutosaveIndicator:" + options.getShowAutosaveIndicator().getValue() + l +
-                "chatPreview:" + options.getChatPreview().getValue() + l +
+               // "chatPreview:" + options.getChatPreview().getValue() + l +
                 "onlyShowSecureChat:" + options.getOnlyShowSecureChat().getValue() + l);
         for (KeyBinding keyBinding : options.allKeys) {
             string.append("key_").append(keyBinding.getTranslationKey()).append(":").append(keyBinding.getBoundKeyTranslationKey()).append(l);
@@ -492,7 +516,7 @@ public class StandardSettings {
         for (PlayerModelPart playerModelPart : PlayerModelPart.values()) {
             string.append("modelPart_").append(playerModelPart.getName()).append(":").append(options.isPlayerModelPartEnabled(playerModelPart)).append(l);
         }
-        string.append("entityCulling:").append(getEntityCulling().isPresent() ? getEntityCulling().get() : "").append(l).append("sneaking:").append(l).append("sprinting:").append(l).append("chunkborders:").append(l).append("hitboxes:").append(l).append("perspective:").append(l).append("piedirectory:").append(l).append("f1:").append(l).append("fovOnWorldJoin:").append(l).append("guiScaleOnWorldJoin:").append(l).append("renderDistanceOnWorldJoin:").append(l).append("simulationDistanceOnWorldJoin:").append(l).append("entityDistanceScalingOnWorldJoin:").append(l).append("changeOnResize:false");
+        string.append("entityCulling:").append(getEntityCulling().isPresent() ? getEntityCulling().get() : "").append(l).append("sneaking:").append(l).append("sprinting:").append(l).append("chunkborders:").append(l).append("hitboxes:").append(l).append("perspective:").append(l).append("piedirectory:").append(l).append("f1:").append(l).append("fovOnWorldJoin:").append(l).append("guiScaleOnWorldJoin:").append(l).append("renderDistanceOnWorldJoin:").append(l).append("simulationDistanceOnWorldJoin:").append(l).append("entityDistanceScalingOnWorldJoin:").append(l).append("changeOnResize:false").append(l).append("f3PauseOnWorldLoad:false").append(l).append("firstWorldF3PauseDelay:22");
 
         return string.toString();
     }
@@ -565,6 +589,18 @@ public class StandardSettings {
 
         checking:
         {
+            if (compareVersions(fileVersion, new int[]{1, 2, 3, -996})) {
+                if (existingLines != null && (existingLines.contains("firstWorldF3PauseDelay"))) {
+                    break checking;
+                }
+                lines.add("firstWorldF3PauseDelay:22");
+            }
+            if (compareVersions(fileVersion, new int[]{1, 2, 3, -1000})) {
+                if (existingLines != null && (existingLines.contains("f3PauseOnWorldLoad"))) {
+                    break checking;
+                }
+                lines.add("f3PauseOnWorldLoad:false");
+            }
             // add lines added in the pre-releases of StandardSettings v1.2.1
             if (compareVersions(fileVersion, new int[]{1, 2, 1, -1000})) {
                 if (existingLines != null && (existingLines.contains("entityCulling") || existingLines.contains("f1") || existingLines.contains("guiScaleOnWorldJoin") || existingLines.contains("changeOnResize"))) {

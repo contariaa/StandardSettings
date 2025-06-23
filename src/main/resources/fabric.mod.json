@@ -18,6 +18,7 @@
   "mixins": [
     "standardsettings.mixins.json"
   ],
+  "accessWidener": "standardsettings.accesswidener",
 
   "depends": {
     "fabricloader": ">=0.14.6",

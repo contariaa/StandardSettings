@@ -156,7 +156,7 @@ public class OptionsCache {
         mouseWheelSensitivity = options.getMouseWheelSensitivity().getValue();
         rawMouseInput = options.getRawMouseInput().getValue();
         showAutosaveIndicator = options.getShowAutosaveIndicator().getValue();
-        chatPreview = options.getChatPreview().getValue();
+//        chatPreview = options.getChatPreview().getValue();
         onlyShowSecureChat = options.getOnlyShowSecureChat().getValue();
         entityCulling = StandardSettings.getEntityCulling();
         sneaking = options.sneakKey.isPressed();
@@ -262,7 +262,7 @@ public class OptionsCache {
         options.getMouseWheelSensitivity().setValue(mouseWheelSensitivity);
         options.getRawMouseInput().setValue(rawMouseInput);
         options.getShowAutosaveIndicator().setValue(showAutosaveIndicator);
-        options.getChatPreview().setValue(chatPreview);
+        // options.getChatPreview().setValue(chatPreview);
         options.getOnlyShowSecureChat().setValue(onlyShowSecureChat);
         entityCulling.ifPresent(StandardSettings::setEntityCulling);
         if (options.getSneakToggled().getValue() && (sneaking != options.sneakKey.isPressed())) {
