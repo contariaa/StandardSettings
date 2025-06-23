@@ -50,6 +50,13 @@ public class StandardSettings {
     public static Map<File, Long> filesLastModifiedMap;
     private static final Field[] entityCulling = new Field[2];
 
+    /**
+     * True only when loading standard settings during a reset.
+     * Used to override Minecraft's stateful clamping of some option values.
+     */
+    private static boolean resetting;
+
+
     public static void load() {
         long start = System.nanoTime();
 
@@ -411,6 +418,14 @@ public class StandardSettings {
 
     private static String asPercent(double value) {
         return value * 100 == (int) (value * 100) ? (int) (value * 100) + "%" : value * 100 + "%";
+    }
+
+    public static void setResetting(boolean resetting) {
+        StandardSettings.resetting = resetting;
+    }
+
+    public static boolean isResetting() {
+        return resetting;
     }
 
     private enum SoundCategoryName {

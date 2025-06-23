@@ -19,9 +19,11 @@ public class CreateWorldScreenMixin {
         // don't reset settings if the last world was reset on world preview
         if (shouldResetSettings) {
             StandardSettings.LOGGER.info("Reset to StandardSettings...");
+            StandardSettings.setResetting(true);
             StandardSettings.load();
             StandardSettings.LOGGER.info("Checking and saving Settings...");
             StandardSettings.checkSettings();
+            StandardSettings.setResetting(false);
             shouldResetSettings = false;
         }
     }

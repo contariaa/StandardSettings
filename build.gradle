@@ -16,6 +16,7 @@ repositories {
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
 	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
 	// for more information about repositories.
+	maven { url "https://api.modrinth.com/maven" }
 }
 
 dependencies {
@@ -23,6 +24,7 @@ dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modCompileOnly "maven.modrinth:sodium:mc1.19.2-0.4.4"
 
 	compileOnlyApi files('libs/sodium-fabric-mc1.19.4-0.4.10+build.24.jar')
 	// Fabric API. This is technically optional, but you probably want it anyway.
@@ -57,6 +59,10 @@ jar {
 	from("LICENSE") {
 		rename { "${it}_${project.archivesBaseName}"}
 	}
+}
+
+loom {
+	accessWidenerPath = file("src/main/resources/standardsettings.accesswidener")
 }
 
 // configure the maven publication
