@@ -34,6 +34,9 @@ public class CreateWorldScreenMixin {
             StandardSettings.changeSettingsOnJoin();
         } else {
             StandardSettings.changeOnWindowActivation = true;
+            if (StandardSettings.f3PauseOnWorldLoad) {
+                StandardSettings.f3PauseSoon = true;
+            }
         }
         shouldResetSettings = true;
     }

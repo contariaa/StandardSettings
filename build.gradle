@@ -24,6 +24,7 @@ dependencies {
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	compileOnlyApi files('libs/sodium-fabric-mc1.17.1-0.3.4+build.13.jar')
+	compileOnlyApi files('libs/worldpreview-2.3.3+1.17.1.jar')
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 }

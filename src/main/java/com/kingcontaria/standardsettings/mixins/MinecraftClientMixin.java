@@ -1,32 +1,56 @@
 package com.kingcontaria.standardsettings.mixins;
 
 import com.kingcontaria.standardsettings.StandardSettings;
+import com.kingcontaria.standardsettings.mixins.accessors.MinecraftServerAccessor;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;
+import net.minecraft.client.gui.screen.GameMenuScreen;
+import net.minecraft.client.gui.screen.LevelLoadingScreen;
+import net.minecraft.client.gui.screen.Screen;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.nio.file.*;
 import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.util.*;
 import java.util.stream.Stream;
 
 @Mixin(MinecraftClient.class)
 
-public class MinecraftClientMixin {
+public abstract class MinecraftClientMixin {
+
+    @Shadow public abstract void openPauseMenu(boolean pause);
+
+    @Shadow @Nullable public Screen currentScreen;
+    @Shadow private boolean windowFocused;
+    @Unique
+    private int tickCount = -3;
 
     // initialize StandardSettings, doesn't use ClientModInitializer because GameOptions need to be initialized first
     @Inject(method = "<init>", at = @At("RETURN"))
     private void initializeStandardSettings(RunArgs args, CallbackInfo ci) {
         StandardSettings.initializeEntityCulling();
-
+        if (FabricLoader.getInstance().getModContainer("worldpreview").isPresent()) {
+            try {
+                // check that WorldPreview.showMenu exists and is static boolean
+                Field showMenu = Class.forName("me.voidxwalker.worldpreview.WorldPreview")
+                        .getField("showMenu");
+                StandardSettings.hasWP = Modifier.isStatic(showMenu.getModifiers()) && showMenu.getType() == boolean.class;
+            } catch (ClassNotFoundException | NoSuchFieldException ignored) {}
+        }
         // create standardoptions.txt
         if (!StandardSettings.standardoptionsFile.exists()) {
             StandardSettings.LOGGER.info("Creating StandardSettings File...");
@@ -143,9 +167,30 @@ public class MinecraftClientMixin {
     @Inject(method = "disconnect(Lnet/minecraft/client/gui/screen/Screen;)V", at = @At("HEAD"))
     private void cacheOptions(CallbackInfo ci) {
         try {
-            StandardSettings.lastWorld = StandardSettings.client.getServer().getIconFile().get().getParent().getFileName().toString();
+            StandardSettings.lastWorld = StandardSettings.client.getLevelStorage().getSavesDirectory()
+                    .resolve(((MinecraftServerAccessor) StandardSettings.client.getServer()).getSession().getDirectoryName()).getFileName().toString();
         } catch (Exception e) {
             // empty catch block
+        }
+    }
+
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void standardSettings_OnPauseNextTick(CallbackInfo ci) {
+        if (StandardSettings.f3PauseSoon && !(currentScreen instanceof LevelLoadingScreen)) {
+            // System.out.println("WHATt: " + tickCount); // useful debug line
+            if (windowFocused) {
+                StandardSettings.f3PauseSoon = false;
+                tickCount = 1;
+                return;
+            }
+            if (tickCount == -3) { tickCount = 1 + StandardSettings.firstWorldF3PauseDelay; }
+            if (tickCount > 0) {
+                tickCount--;
+                return;
+            }
+            tickCount = 1;
+            openPauseMenu(true);
+            StandardSettings.f3PauseSoon = !(currentScreen instanceof GameMenuScreen);
         }
     }
 
