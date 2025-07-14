@@ -10,7 +10,8 @@
     "WorldListWidgetEntryMixin",
     "WorldSaveHandlerMixin",
     "accessors.BakedModelManagerAccessor",
-    "accessors.MinecraftClientAccessor"
+    "accessors.MinecraftClientAccessor",
+    "accessors.MinecraftServerAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

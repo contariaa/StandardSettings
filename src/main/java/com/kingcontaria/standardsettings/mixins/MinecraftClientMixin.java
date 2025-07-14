@@ -1,6 +1,7 @@
 package com.kingcontaria.standardsettings.mixins;
 
 import com.kingcontaria.standardsettings.StandardSettings;
+import com.kingcontaria.standardsettings.mixins.accessors.MinecraftServerAccessor;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;
@@ -22,7 +23,7 @@ import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.nio.file.*;
 import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.util.*;
 import java.util.stream.Stream;
@@ -166,7 +167,8 @@ public abstract class MinecraftClientMixin {
     @Inject(method = "disconnect(Lnet/minecraft/client/gui/screen/Screen;)V", at = @At("HEAD"))
     private void cacheOptions(CallbackInfo ci) {
         try {
-            StandardSettings.lastWorld = StandardSettings.client.getServer().getIconFile().get().getParent().getFileName().toString();
+            StandardSettings.lastWorld = StandardSettings.client.getLevelStorage().getSavesDirectory()
+                    .resolve(((MinecraftServerAccessor) StandardSettings.client.getServer()).getSession().getDirectoryName()).getFileName().toString();
         } catch (Exception e) {
             // empty catch block
         }
