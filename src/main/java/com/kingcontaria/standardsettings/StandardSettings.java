@@ -28,7 +28,7 @@ import java.util.*;
 @Environment(value= EnvType.CLIENT)
 public class StandardSettings {
 
-    public static final int[] version = new int[]{1,2,3, 1};
+    public static final int[] version = new int[]{1,2,4};
     public static final Logger LOGGER = LogManager.getLogger();
     public static final MinecraftClient client = MinecraftClient.getInstance();
     public static final GameOptions options = client.options;
