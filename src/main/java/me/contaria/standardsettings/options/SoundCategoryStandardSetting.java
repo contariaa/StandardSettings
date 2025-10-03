@@ -3,11 +3,12 @@ package me.contaria.standardsettings.options;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import me.contaria.standardsettings.StandardGameOptions;
-import net.minecraft.client.gui.widget.AbstractButtonWidget;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.PagedEntryListWidget;
 import net.minecraft.client.gui.widget.SliderWidget;
-import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.resource.language.I18n;
-import net.minecraft.sound.SoundCategory;
+import net.minecraft.client.sound.SoundCategory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,22 +58,28 @@ public class SoundCategoryStandardSetting extends StandardSetting<Float> {
     }
 
     @Override
-    public @NotNull AbstractButtonWidget createMainWidget() {
+    public @NotNull ButtonWidget createMainWidget() {
         // see SoundSliderWidget
-        return new SliderWidget(0, 0, 120, 20, this.get()) {
-            {
-                this.updateMessage();
+        SliderWidget widget = new SliderWidget(new PagedEntryListWidget.Listener() {
+            @Override
+            public void setBooleanValue(int id, boolean value) {
             }
 
             @Override
-            protected void updateMessage() {
-                this.setMessage(SoundCategoryStandardSetting.this.getText());
+            public void setFloatValue(int id, float value) {
+                SoundCategoryStandardSetting.this.set(value);
             }
 
             @Override
-            protected void applyValue() {
-                SoundCategoryStandardSetting.this.set((float) this.value);
+            public void setStringValue(int id, String text) {
             }
-        };
+        }, -1, 0, 0, "soundCategory." + this.soundCategory.getName(), 0.0f, 1.0f, this.get(), (id, label, value) -> {
+            if (value == 0.0f) {
+                return I18n.translate("options.off");
+            }
+            return (int) (value * 100.0f) + "%";
+        });
+        widget.setWidth(120);
+        return widget;
     }
 }

@@ -1,74 +1,65 @@
 plugins {
-	id 'fabric-loom' version '1.5-SNAPSHOT'
-	id 'maven-publish'
+	id "fabric-loom" version "1.11-SNAPSHOT"
+	id "legacy-looming" version "1.10-SNAPSHOT"
+	id "maven-publish"
 }
 
-version = project.mod_version + "+" + project.target_version
-group = project.maven_group
+version = "$mod_version+$target_version"
+group = maven_group
 
 base {
-	archivesName = project.archives_base_name
+	archivesName = archives_base_name
 }
 
 repositories {
-	maven {
-		url 'https://jitpack.io'
+	maven { url "https://jitpack.io" }
+}
+
+loom {
+	decompilers {
+		vineflower {
+			options.putAll(["mark-corresponding-synthetics": "1", "indent-string": "    "])
+		}
 	}
+	mixin {
+		useLegacyMixinAp = false
+	}
+	runs.client.programArgs "--userProperties", "{}"
 }
 
 dependencies {
-	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	mappings(legacy.yarn(project.minecraft_version, project.yarn_mappings))
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// SpeedrunAPI
 	// check for the latest versions at https://jitpack.io/#contariaa/speedrunapi
-	modImplementation "com.github.contariaa:SpeedrunAPI:40b44ae2a5"
+	modImplementation "com.github.contariaa:SpeedrunAPI:c6c47b82a0"
 }
 
 processResources {
-	inputs.property "version", version
-
-	filesMatching("fabric.mod.json") {
+	filesMatching "fabric.mod.json", {
 		expand "version": version
 	}
 }
 
 tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = "UTF-8"
-
-	// Minecraft 1.17 (21w19a) upwards uses Java 16.
-	def targetVersion = 8
-	it.options.release = targetVersion
+	it.options.release.set(8)
 }
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
+	sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
 	withSourcesJar()
 }
 
 jar {
-	from("LICENSE") {
-		rename { "${it}_${project.base.archivesName.get()}"}
-	}
+	from "LICENSE"
 }
 
-// configure the maven publication
 publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			from components.java
-		}
+	publications.create("mavenJava", MavenPublication) {
+		from components.java
 	}
-
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
-	}
+	repositories {}
 }

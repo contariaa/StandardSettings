@@ -1,14 +1,14 @@
 package me.contaria.standardsettings;
 
+import me.contaria.standardsettings.mixin.accessors.MinecraftClientAccessor;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.util.VideoMode;
+import net.minecraft.client.option.GameOptions;
 
 import java.io.File;
 
 public class StandardGameOptions extends GameOptions {
     private boolean hitBoxes;
-    private boolean chunkBorders;
+    private String pieDirectory;
 
     public StandardGameOptions(MinecraftClient client, File optionsFile) {
         super(client, optionsFile);
@@ -19,33 +19,18 @@ public class StandardGameOptions extends GameOptions {
     }
 
     @Override
-    public void write() {
+    public void save() {
     }
 
     @Override
     public void onPlayerModelPartChange() {
     }
 
-    public static String getFullscreenResolution(GameOptions options) {
-        if (options instanceof StandardGameOptions) {
-            return options.fullscreenResolution;
-        }
-        return MinecraftClient.getInstance().window.getVideoMode().map(VideoMode::asString).orElse(null);
-    }
-
-    public static void setFullscreenResolution(GameOptions options, String value) {
-        if (options instanceof StandardGameOptions) {
-            options.fullscreenResolution = value;
-        } else {
-            MinecraftClient.getInstance().window.setVideoMode(VideoMode.fromString(value));
-        }
-    }
-
     public static boolean getHitBoxes(GameOptions options) {
         if (options instanceof StandardGameOptions) {
             return ((StandardGameOptions) options).hitBoxes;
         }
-        return MinecraftClient.getInstance().getEntityRenderManager().shouldRenderHitboxes();
+        return MinecraftClient.getInstance().getEntityRenderManager().getRenderHitboxes();
     }
 
     public static void setHitBoxes(GameOptions options, boolean value) {
@@ -56,19 +41,22 @@ public class StandardGameOptions extends GameOptions {
         }
     }
 
-    public static boolean getChunkBorders(GameOptions options) {
+    public static String getPieDirectory(GameOptions options) {
         if (options instanceof StandardGameOptions) {
-            return ((StandardGameOptions) options).chunkBorders;
+            return ((StandardGameOptions) options).pieDirectory;
         }
-        MinecraftClient.getInstance().debugRenderer.toggleShowChunkBorder();
-        return MinecraftClient.getInstance().debugRenderer.toggleShowChunkBorder();
+        return ((MinecraftClientAccessor) MinecraftClient.getInstance()).standardsettings$getOpenProfilerSection();
     }
 
-    public static void setChunkBorders(GameOptions options, boolean value) {
+    public static void setPieDirectory(GameOptions options, String value) {
+        if (!value.startsWith("root")) {
+            value = "root";
+        }
+        value = value.trim();
         if (options instanceof StandardGameOptions) {
-            ((StandardGameOptions) options).chunkBorders = value;
-        } else if (MinecraftClient.getInstance().debugRenderer.toggleShowChunkBorder() != value) {
-            MinecraftClient.getInstance().debugRenderer.toggleShowChunkBorder();
+            ((StandardGameOptions) options).pieDirectory = value;
+        } else {
+            ((MinecraftClientAccessor) MinecraftClient.getInstance()).standardsettings$setOpenProfilerSection(value);
         }
     }
 }

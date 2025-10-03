@@ -2,18 +2,20 @@ package me.contaria.standardsettings.options;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import me.contaria.speedrunapi.config.api.gui.CallbackButtonWidget;
 import me.contaria.standardsettings.StandardGameOptions;
+import me.contaria.standardsettings.mixin.accessors.ButtonWidgetAccessor;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.OptionSliderWidget;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.resource.language.I18n;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BooleanOptionStandardSetting extends StandardSetting<Boolean> {
+public class FloatOptionStandardSetting extends StandardSetting<Float> {
     private final GameOptions.Option option;
 
-    public BooleanOptionStandardSetting(String id, @Nullable String category, StandardGameOptions options, GameOptions.Option option) {
+    public FloatOptionStandardSetting(String id, @Nullable String category, StandardGameOptions options, GameOptions.Option option) {
         super(id, category, options);
         this.option = option;
 
@@ -21,20 +23,18 @@ public class BooleanOptionStandardSetting extends StandardSetting<Boolean> {
     }
 
     @Override
-    protected Boolean get(GameOptions options) {
-        return options.getIntVideoOptions(this.option);
+    public Float get(GameOptions options) {
+        return options.getIntValue(this.option);
     }
 
     @Override
-    protected void set(GameOptions options, Boolean value) {
-        if (value != this.get(options)) {
-            options.getBooleanValue(this.option, 1);
-        }
+    public void set(GameOptions options, Float value) {
+        options.setValue(this.option, this.option.adjust(value));
     }
 
     @Override
     protected void valueFromJson(JsonElement jsonElement) {
-        this.set(jsonElement.getAsBoolean());
+        this.set(jsonElement.getAsFloat());
     }
 
     @Override
@@ -54,9 +54,14 @@ public class BooleanOptionStandardSetting extends StandardSetting<Boolean> {
 
     @Override
     public @NotNull ButtonWidget createMainWidget() {
-        return new CallbackButtonWidget(120, 20, this.getText(), button -> {
-            this.options.getBooleanValue(this.option, 1);
-            button.message = this.getText();
-        });
+        OptionSliderWidget widget = new OptionSliderWidget(this.option.getOrdinal(), 0, 0, this.option) {
+            @Override
+            public void render(MinecraftClient client, int mouseX, int mouseY) {
+                this.message = FloatOptionStandardSetting.this.getText();
+                super.render(client, mouseX, mouseY);
+            }
+        };
+        ((ButtonWidgetAccessor) widget).standardsettings$setWidth(120);
+        return widget;
     }
 }

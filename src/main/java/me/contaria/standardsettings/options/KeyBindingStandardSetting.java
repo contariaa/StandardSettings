@@ -2,22 +2,20 @@ package me.contaria.standardsettings.options;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import me.contaria.speedrunapi.config.api.gui.CallbackButtonWidget;
 import me.contaria.standardsettings.StandardSettings;
-import net.minecraft.client.gui.widget.AbstractButtonWidget;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.options.KeyBinding;
+import net.minecraft.client.option.GameOptions;
+import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.resource.language.I18n;
-import net.minecraft.client.util.InputUtil;
 import net.minecraft.util.Formatting;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
-public class KeyBindingStandardSetting extends StandardSetting<InputUtil.KeyCode> {
+public class KeyBindingStandardSetting extends StandardSetting<Integer> {
     private final KeyBinding keyBinding;
-    private InputUtil.KeyCode value;
+    private int value;
 
     public KeyBindingStandardSetting(String id, @Nullable String category, KeyBinding keyBinding) {
         super(id, category, null);
@@ -27,58 +25,58 @@ public class KeyBindingStandardSetting extends StandardSetting<InputUtil.KeyCode
     }
 
     @Override
-    public InputUtil.KeyCode get() {
+    public Integer get() {
         return this.value;
     }
 
     @Override
-    public void set(InputUtil.KeyCode value) {
+    public void set(Integer value) {
         this.value = value;
     }
 
     @Override
-    protected void set(GameOptions options, InputUtil.KeyCode value) {
+    protected void set(GameOptions options, Integer value) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    protected InputUtil.KeyCode get(GameOptions options) {
+    protected Integer get(GameOptions options) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public InputUtil.KeyCode getOption() {
-        return InputUtil.fromName(this.keyBinding.getName());
+    public Integer getOption() {
+        return this.keyBinding.getCode();
     }
 
     @Override
-    public void setOption(InputUtil.KeyCode value) {
-        this.keyBinding.setKeyCode(value);
+    public void setOption(Integer value) {
+        this.keyBinding.setCode(value);
     }
 
     @Override
     protected void valueFromJson(JsonElement jsonElement) {
-        this.set(InputUtil.fromName(jsonElement.getAsString()));
+        this.set(jsonElement.getAsInt());
     }
 
     @Override
     protected JsonElement valueToJson() {
-        return new JsonPrimitive(this.get().getName());
+        return new JsonPrimitive(this.get());
     }
 
     @Override
     public @NotNull String getName() {
-        return I18n.translate(this.keyBinding.getId());
+        return I18n.translate(this.keyBinding.getTranslationKey());
     }
 
     @Override
     public @NotNull String getDisplayText() {
-        String text = this.getLocalizedName(this.value);
+        String text = GameOptions.getFormattedNameForKeyCode(this.get());
         if (StandardSettings.config.isFocusedKeyBinding(this)) {
             return Formatting.WHITE + "> " + Formatting.YELLOW + text + Formatting.WHITE + " <";
         } else {
             for (StandardSetting<?> setting : StandardSettings.config.standardSettings) {
-                if (setting != this && setting instanceof KeyBindingStandardSetting && setting.isEnabled() && this.value.equals(((KeyBindingStandardSetting) setting).value)) {
+                if (setting != this && setting instanceof KeyBindingStandardSetting && setting.isEnabled() && this.get() != 0 && this.get() == ((KeyBindingStandardSetting) setting).value) {
                     return Formatting.RED + text;
                 }
             }
@@ -86,32 +84,13 @@ public class KeyBindingStandardSetting extends StandardSetting<InputUtil.KeyCode
         return text;
     }
 
-    // copy of KeyBinding#getLocalizedName
-    private String getLocalizedName(InputUtil.KeyCode keyCode) {
-        String key = keyCode.getName();
-        int i = keyCode.getKeyCode();
-        String name = null;
-        switch (keyCode.getCategory()) {
-            case KEYSYM:
-                name = InputUtil.getKeycodeName(i);
-                break;
-            case SCANCODE:
-                name = InputUtil.getScancodeName(i);
-                break;
-            case MOUSE:
-                String string3 = I18n.translate(key);
-                name = Objects.equals(string3, key) ? I18n.translate(InputUtil.Type.MOUSE.getName(), i + 1) : string3;
-        }
-        return name == null ? I18n.translate(key) : name;
-    }
-
     @Override
-    public @NotNull AbstractButtonWidget createMainWidget() {
-        return new ButtonWidget(0, 0, 120, 20, this.getText(), button -> StandardSettings.config.setFocusedKeyBinding(this)) {
+    public @NotNull ButtonWidget createMainWidget() {
+        return new CallbackButtonWidget(120, 20, this.getText(), button -> StandardSettings.config.setFocusedKeyBinding(this)) {
             @Override
-            public void render(int mouseX, int mouseY, float delta) {
-                this.setMessage(KeyBindingStandardSetting.this.getText());
-                super.render(mouseX, mouseY, delta);
+            public void render(MinecraftClient client, int mouseX, int mouseY) {
+                this.message = KeyBindingStandardSetting.this.getText();
+                super.render(client, mouseX, mouseY);
             }
         };
     }

@@ -10,26 +10,31 @@ import net.minecraft.client.resource.language.I18n;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BooleanOptionStandardSetting extends StandardSetting<Boolean> {
-    private final GameOptions.Option option;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
-    public BooleanOptionStandardSetting(String id, @Nullable String category, StandardGameOptions options, GameOptions.Option option) {
+public class BooleanStandardSetting extends StandardSetting<Boolean> {
+    private final Function<GameOptions, Boolean> getter;
+    private final BiConsumer<GameOptions, Boolean> setter;
+
+    private boolean value;
+
+    public BooleanStandardSetting(String id, @Nullable String category, StandardGameOptions options, Function<GameOptions, Boolean> getter, BiConsumer<GameOptions, Boolean> setter) {
         super(id, category, options);
-        this.option = option;
+        this.getter = getter;
+        this.setter = setter;
 
         this.set(this.getOption());
     }
 
     @Override
-    protected Boolean get(GameOptions options) {
-        return options.getIntVideoOptions(this.option);
+    public Boolean get(GameOptions options) {
+        return this.getter.apply(options);
     }
 
     @Override
-    protected void set(GameOptions options, Boolean value) {
-        if (value != this.get(options)) {
-            options.getBooleanValue(this.option, 1);
-        }
+    public void set(GameOptions options, Boolean value) {
+        this.setter.accept(options, value);
     }
 
     @Override
@@ -43,19 +48,14 @@ public class BooleanOptionStandardSetting extends StandardSetting<Boolean> {
     }
 
     @Override
-    public @NotNull String getName() {
-        return I18n.translate(this.option.getName());
-    }
-
-    @Override
-    public @NotNull String getDisplayText() {
-        return StandardSetting.getStringWithoutPrefix(this.options.getValueMessage(this.option), this.getName() + ": ");
+    protected @NotNull String getDisplayText() {
+        return this.get() ? I18n.translate("options.on") : I18n.translate("options.off");
     }
 
     @Override
     public @NotNull ButtonWidget createMainWidget() {
         return new CallbackButtonWidget(120, 20, this.getText(), button -> {
-            this.options.getBooleanValue(this.option, 1);
+            this.set(!this.get());
             button.message = this.getText();
         });
     }

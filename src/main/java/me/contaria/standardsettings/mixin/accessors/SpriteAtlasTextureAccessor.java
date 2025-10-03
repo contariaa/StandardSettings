@@ -6,6 +6,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(SpriteAtlasTexture.class)
 public interface SpriteAtlasTextureAccessor {
-    @Accessor("mipLevel")
-    int standardsettings$getMipLevel();
+    @Accessor("maxTextureSize")
+    int standardsettings$getMaxTextureSize();
 }

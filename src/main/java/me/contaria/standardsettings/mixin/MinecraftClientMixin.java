@@ -5,39 +5,22 @@ import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
 import me.contaria.standardsettings.StandardSettings;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.screen.GameMenuScreen;
-import net.minecraft.client.gui.screen.LevelLoadingScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.world.level.LevelInfo;
 import net.minecraft.world.level.LevelProperties;
-import org.jetbrains.annotations.Nullable;
+import org.lwjgl.opengl.Display;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(MinecraftClient.class)
 public abstract class MinecraftClientMixin {
-    @Shadow
-    @Nullable
-    private IntegratedServer server;
-
-    @Shadow
-    public abstract boolean isWindowFocused();
-
-    @Shadow
-    public abstract void openPauseMenu(boolean pause);
 
     @ModifyExpressionValue(
             method = "startIntegratedServer",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/WorldSaveHandler;readProperties()Lnet/minecraft/world/level/LevelProperties;"
+                    target = "Lnet/minecraft/world/SaveHandler;getLevelProperties()Lnet/minecraft/world/level/LevelProperties;"
             )
     )
     private LevelProperties setIsNewWorld(LevelProperties properties, @Share("isNewWorld") LocalBooleanRef isNewWorld) {
@@ -49,7 +32,7 @@ public abstract class MinecraftClientMixin {
             method = "startIntegratedServer",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/world/WorldSaveHandler;readProperties()Lnet/minecraft/world/level/LevelProperties;",
+                    target = "Lnet/minecraft/world/SaveHandler;getLevelProperties()Lnet/minecraft/world/level/LevelProperties;",
                     shift = At.Shift.AFTER
             )
     )
@@ -73,21 +56,20 @@ public abstract class MinecraftClientMixin {
         }
         StandardSettings.saveToWorldFile(name);
         if (StandardSettings.isEnabled()) {
-            if (this.isWindowFocused()) {
+            if (Display.isActive()) {
                 StandardSettings.onWorldJoin();
             } else {
                 StandardSettings.onWorldJoinPending = true;
-                StandardSettings.autoF3EscPending = StandardSettings.config.autoF3Esc;
             }
         }
     }
 
     @Inject(
-            method = "onWindowFocusChanged",
-            at = @At("RETURN")
+            method = "runGameLoop",
+            at = @At("HEAD")
     )
-    private void onWorldJoin_onWindowFocus(boolean focused, CallbackInfo ci) {
-        if (StandardSettings.onWorldJoinPending && focused) {
+    private void onWorldJoin_onWindowFocus(CallbackInfo ci) {
+        if (StandardSettings.onWorldJoinPending && Display.isActive()) {
             StandardSettings.onWorldJoin();
         }
     }
@@ -130,42 +112,5 @@ public abstract class MinecraftClientMixin {
         if (MinecraftClient.getInstance().isOnThread()) {
             StandardSettings.lastWorld = name;
         }
-    }
-
-    @Inject(
-            method = "tick",
-            at = @At("HEAD")
-    )
-    private void autoF3Esc(CallbackInfo ci) {
-        StandardSettings.autoF3EscPending &= this.server != null && !this.isWindowFocused();
-        if (StandardSettings.autoF3EscPending) {
-            if (StandardSettings.config.autoF3EscDelay > 0) {
-                StandardSettings.config.autoF3EscDelay--;
-            } else {
-                this.openPauseMenu(true);
-            }
-        }
-    }
-
-    @Inject(
-            method = "openScreen",
-            at = @At("TAIL")
-    )
-    private void autoF3Esc_onPreview(Screen screen, CallbackInfo ci) {
-        if (screen instanceof LevelLoadingScreen && StandardSettings.config.autoF3Esc) {
-            String backToGame = I18n.translate("menu.returnToGame");
-            for (Element e : screen.children()) {
-                if (!(e instanceof ButtonWidget)) {
-                    continue;
-                }
-                ButtonWidget button = (ButtonWidget) e;
-                if (backToGame.equals(button.getMessage())) {
-                    button.onPress();
-                    break;
-                }
-            }
-        }
-
-        StandardSettings.autoF3EscPending &= !(screen instanceof GameMenuScreen);
     }
 }

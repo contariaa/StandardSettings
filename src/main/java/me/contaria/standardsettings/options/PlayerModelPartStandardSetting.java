@@ -2,10 +2,10 @@ package me.contaria.standardsettings.options;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import me.contaria.speedrunapi.config.api.gui.CallbackButtonWidget;
 import me.contaria.standardsettings.StandardGameOptions;
-import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.render.entity.PlayerModelPart;
 import net.minecraft.client.resource.language.I18n;
 import org.jetbrains.annotations.NotNull;
@@ -52,10 +52,10 @@ public class PlayerModelPartStandardSetting extends StandardSetting<Boolean> {
     }
 
     @Override
-    public @NotNull AbstractButtonWidget createMainWidget() {
-        return new ButtonWidget(0, 0, 120, 20, this.getText(), button -> {
+    public @NotNull ButtonWidget createMainWidget() {
+        return new CallbackButtonWidget(120, 20, this.getText(), button -> {
             this.options.togglePlayerModelPart(this.playerModelPart);
-            button.setMessage(this.getText());
+            button.message = this.getText();
         });
     }
 }

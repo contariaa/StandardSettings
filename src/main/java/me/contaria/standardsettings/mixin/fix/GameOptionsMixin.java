@@ -4,11 +4,13 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import me.contaria.standardsettings.StandardGameOptions;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.options.KeyBinding;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.option.GameOptions;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.sound.SoundCategory;
 import net.minecraft.client.sound.SoundManager;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.sound.SoundCategory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,10 +19,10 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class GameOptionsMixin {
 
     @WrapOperation(
-            method = "<init>",
+            method = "<init>*",
             at = @At(
                     value = "NEW",
-                    target = "(Ljava/lang/String;ILjava/lang/String;)Lnet/minecraft/client/options/KeyBinding;"
+                    target = "(Ljava/lang/String;ILjava/lang/String;)Lnet/minecraft/client/option/KeyBinding;"
             )
     )
     private KeyBinding doNotCreateKeyBindings(String translationKey, int code, String category, Operation<KeyBinding> original) {
@@ -30,25 +32,66 @@ public abstract class GameOptionsMixin {
         return original.call(translationKey, code, category);
     }
 
-    @WrapOperation(
-            method = "<init>",
+    @WrapWithCondition(
+            method = "getBooleanValue",
             at = @At(
-                    value = "NEW",
-                    target = "(Ljava/lang/String;Lnet/minecraft/client/util/InputUtil$Type;ILjava/lang/String;)Lnet/minecraft/client/options/KeyBinding;"
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/render/WorldRenderer;reload()V"
             )
     )
-    private KeyBinding doNotCreateKeyBindings(String translationKey, InputUtil.Type type, int code, String category, Operation<KeyBinding> original) {
-        if (this.isStandardSettings()) {
-            return null;
-        }
-        return original.call(translationKey, type, code, category);
+    private boolean doNotReloadWorldRenderer(WorldRenderer worldRenderer) {
+        return !this.isStandardSettings();
+    }
+
+    @WrapWithCondition(
+            method = "getBooleanValue",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/font/TextRenderer;setUnicode(Z)V"
+            )
+    )
+    private boolean doNotSetUnicode(TextRenderer textRenderer, boolean unicode) {
+        return !this.isStandardSettings();
+    }
+
+    @WrapWithCondition(
+            method = "getBooleanValue",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/MinecraftClient;reloadResources()V"
+            )
+    )
+    private boolean doNotReloadResources(MinecraftClient client) {
+        return !this.isStandardSettings();
+    }
+
+    @WrapWithCondition(
+            method = "getBooleanValue",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/MinecraftClient;toggleFullscreen()V"
+            )
+    )
+    private boolean doNotToggleFullscreen(MinecraftClient instance) {
+        return !this.isStandardSettings();
+    }
+
+    @WrapWithCondition(
+            method = "getBooleanValue",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lorg/lwjgl/opengl/Display;setVSyncEnabled(Z)V"
+            )
+    )
+    private boolean doNotSetVsyncEnabled(boolean sync) {
+        return !this.isStandardSettings();
     }
 
     @WrapWithCondition(
             method = "setSoundVolume",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/sound/SoundManager;updateSoundVolume(Lnet/minecraft/sound/SoundCategory;F)V"
+                    target = "Lnet/minecraft/client/sound/SoundManager;updateSoundVolume(Lnet/minecraft/client/sound/SoundCategory;F)V"
             )
     )
     private boolean doNotUpdateSoundVolume(SoundManager manager, SoundCategory category, float volume) {

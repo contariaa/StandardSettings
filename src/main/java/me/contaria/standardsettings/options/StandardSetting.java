@@ -7,8 +7,7 @@ import me.contaria.speedrunapi.config.api.SpeedrunOption;
 import me.contaria.standardsettings.StandardGameOptions;
 import me.contaria.standardsettings.gui.StandardOptionWidget;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.widget.AbstractButtonWidget;
-import net.minecraft.client.options.GameOptions;
+import net.minecraft.client.option.GameOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,11 +66,11 @@ public abstract class StandardSetting<T> implements SpeedrunOption<T> {
     }
 
     @Override
-    public final @NotNull AbstractButtonWidget createWidget() {
+    public final @NotNull Object createWidget() {
         return new StandardOptionWidget(this, this.createMainWidget());
     }
 
-    public abstract @NotNull AbstractButtonWidget createMainWidget();
+    public abstract @NotNull Object createMainWidget();
 
     @Override
     public @Nullable String getDescription() {

@@ -4,17 +4,12 @@
   "compatibilityLevel": "JAVA_8",
   "client": [
     "MinecraftClientMixin",
-    "accessors.BakedModelManagerAccessor",
-    "accessors.BooleanOptionAccessor",
-    "accessors.DoubleOptionAccessor",
+    "accessors.ButtonWidgetAccessor",
     "accessors.LanguageOptionsScreenAccessor",
-    "accessors.OptionAccessor",
+    "accessors.MinecraftClientAccessor",
     "accessors.SpriteAtlasTextureAccessor",
     "fix.GameOptionsMixin",
-    "fix.KeyboardMixin",
-    "fix.LanguageOptionsScreenMixin",
-    "fix.LanguageSelectionListWidgetMixin",
-    "fix.OptionMixin"
+    "fix.LanguageSelectionListWidgetMixin"
   ],
   "injectors": {
     "defaultRequire": 1

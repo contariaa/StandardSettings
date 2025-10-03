@@ -1,13 +1,14 @@
 package me.contaria.standardsettings;
 
-import me.contaria.standardsettings.mixin.accessors.BakedModelManagerAccessor;
 import me.contaria.standardsettings.mixin.accessors.SpriteAtlasTextureAccessor;
 import me.contaria.standardsettings.options.StandardSetting;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.options.KeyBinding;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.resource.language.LanguageDefinition;
 import net.minecraft.client.resource.language.LanguageManager;
 import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.Window;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +31,8 @@ public class StandardSettings {
     public static String lastWorld;
     public static boolean onWorldJoinPending;
     public static boolean autoF3EscPending;
+
+    protected static boolean anaglyph3dUpdated;
 
     public static void reset() {
         config.update();
@@ -50,35 +54,48 @@ public class StandardSettings {
 
     public static void updateSettings() {
         MinecraftClient client = MinecraftClient.getInstance();
-        Window window = client.window;
 
-        window.method_4475();
-
-        if (window.getScaleFactor() != client.options.guiScale) {
-            client.onResolutionChanged();
+        Window window = new Window(client);
+        Screen screen = client.currentScreen;
+        if (screen != null && (screen.width != window.getWidth() || screen.height != window.getHeight())) {
+            screen.init(client, window.getWidth(), window.getHeight());
         }
 
         LanguageManager languageManager = client.getLanguageManager();
         if (!languageManager.getLanguage().getCode().equals(client.options.language)) {
-            LanguageDefinition language = languageManager.getLanguage(client.options.language);
+            LanguageDefinition language = getLanguage(languageManager, client.options.language);
             if (language == null) {
-                language = languageManager.getLanguage(client.options.language = "en_us");
+                language = getLanguage(languageManager, "en_US");
             }
             languageManager.setLanguage(language);
-            languageManager.apply(client.getResourceManager());
+            languageManager.reload(client.getResourceManager());
         }
 
-        BakedModelManagerAccessor bakedModelManager = (BakedModelManagerAccessor) client.getBakedModelManager();
-        if (((SpriteAtlasTextureAccessor) client.getSpriteAtlas()).standardsettings$getMipLevel() != client.options.mipmapLevels) {
-            client.getSpriteAtlas().setMipLevel(client.options.mipmapLevels);
-            client.getTextureManager().bindTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEX);
-            client.getSpriteAtlas().setFilter(false, client.options.mipmapLevels > 0);
-            bakedModelManager.standardsettings$apply(bakedModelManager.standardsettings$prepare(client.getResourceManager(), client.getProfiler()), client.getResourceManager(), client.getProfiler());
+        TextureManager textureManager = client.getTextureManager();
+        SpriteAtlasTexture atlasTexture = client.getSpriteAtlasTexture();
+        if (((SpriteAtlasTextureAccessor) atlasTexture).standardsettings$getMaxTextureSize() != client.options.mipmapLevels) {
+            atlasTexture.setMaxTextureSize(client.options.mipmapLevels);
+            textureManager.bindTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEX);
+            atlasTexture.setFilter(false, client.options.mipmapLevels > 0);
+            textureManager.reload(client.getResourceManager());
+            anaglyph3dUpdated = false;
+        } else if (anaglyph3dUpdated) {
+            textureManager.reload(client.getResourceManager());
+            anaglyph3dUpdated = false;
         }
 
         KeyBinding.updateKeysByCode();
 
-        client.options.write();
+        client.options.save();
+    }
+
+    public static LanguageDefinition getLanguage(LanguageManager manager, String code) {
+        for (LanguageDefinition language : manager.getAllLanguages()) {
+            if (language.getCode().equals(code)) {
+                return language;
+            }
+        }
+        return null;
     }
 
     public static void createCache() {
@@ -110,7 +127,7 @@ public class StandardSettings {
             options.add(setting.getID() + ":" + setting.get());
         }
         try {
-            Files.write(MinecraftClient.getInstance().getLevelStorage().getSavesDirectory().resolve(worldName).resolve("standardoptions.txt"), options, StandardCharsets.UTF_8);
+            Files.write(Paths.get("saves", worldName, "standardoptions.txt"), options, StandardCharsets.UTF_8);
             LOGGER.info("Saved standardoptions to world file.");
         } catch (IOException e) {
             LOGGER.warn("Failed to save standardoptions to world file.", e);
