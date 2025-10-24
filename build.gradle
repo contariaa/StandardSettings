@@ -24,7 +24,7 @@ dependencies {
 
 	// SpeedrunAPI
 	// check for the latest versions at https://jitpack.io/#contariaa/speedrunapi
-	modImplementation "com.github.contariaa:SpeedrunAPI:40b44ae2a5"
+	modImplementation "com.github.contariaa:SpeedrunAPI:6b8c8a8fef"
 }
 
 processResources {
