@@ -1,6 +1,6 @@
 package com.kingcontaria.standardsettings.mixins.accessors;
 
-import net.minecraft.client.gui.hud.debug.PieChart;
+import net.minecraft.client.gui.hud.debug.chart.PieChart;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
