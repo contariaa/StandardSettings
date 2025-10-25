@@ -3,6 +3,7 @@ package com.kingcontaria.standardsettings;
 import com.kingcontaria.standardsettings.mixins.accessors.GameOptionsAccessor;
 import com.kingcontaria.standardsettings.mixins.accessors.PieChartAccessor;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.hud.debug.*;
 import net.minecraft.client.option.*;
 import net.minecraft.client.sound.MusicTracker;
 import net.minecraft.client.util.InputUtil;
@@ -32,6 +33,7 @@ public class OptionsCache {
     private boolean forceUnicodeFont;
     private boolean japaneseGlyphVariants;
     private boolean discreteMouseScroll;
+    private boolean invertXMouse;
     private boolean invertYMouse;
     private boolean reducedDebugInfo;
     private boolean showSubtitles;
@@ -41,6 +43,8 @@ public class OptionsCache {
     private boolean bobView;
     private boolean sneakToggled;
     private boolean sprintToggled;
+    private boolean attackToggled;
+    private boolean useToggled;
     private double distortionEffectScale;
     private double fovEffectScale;
     private double darknessEffectScale;
@@ -86,11 +90,15 @@ public class OptionsCache {
     private int menuBackgroundBlurriness;
     private MusicTracker.MusicFrequency musicFrequency;
     private boolean showNowPlayingToast;
+    private int sprintWindow;
+    private boolean allowCursorChanges;
     private Optional<Boolean> entityCulling;
     private boolean sneaking;
     private boolean sprinting;
-    private boolean chunkborders;
-    private boolean hitboxes;
+    private boolean attacking;
+    private boolean using;
+    private DebugHudEntryVisibility chunkborders;
+    private DebugHudEntryVisibility hitboxes;
     private Perspective perspective;
     private String piedirectory;
     private boolean hudHidden;
@@ -118,7 +126,8 @@ public class OptionsCache {
         forceUnicodeFont = options.getForceUnicodeFont().getValue();
         japaneseGlyphVariants = options.getJapaneseGlyphVariants().getValue();
         discreteMouseScroll = options.getDiscreteMouseScroll().getValue();
-        invertYMouse = options.getInvertYMouse().getValue();
+        invertXMouse = options.getInvertMouseX().getValue();
+        invertYMouse = options.getInvertMouseY().getValue();
         reducedDebugInfo = options.getReducedDebugInfo().getValue();
         showSubtitles = options.getShowSubtitles().getValue();
         directionalAudio = options.getDirectionalAudio().getValue();
@@ -127,6 +136,8 @@ public class OptionsCache {
         bobView = options.getBobView().getValue();
         sneakToggled = options.getSneakToggled().getValue();
         sprintToggled = options.getSprintToggled().getValue();
+        attackToggled = options.getAttackToggled().getValue();
+        useToggled = options.getUseToggled().getValue();
         monochromeLogo = options.getMonochromeLogo().getValue();
         hideLightningFlashes = options.getHideLightningFlashes().getValue();
         mouseSensitivity = options.getMouseSensitivity().getValue();
@@ -172,13 +183,16 @@ public class OptionsCache {
         menuBackgroundBlurriness = options.getMenuBackgroundBlurriness().getValue();
         musicFrequency = options.getMusicFrequency().getValue();
         showNowPlayingToast = options.getShowNowPlayingToast().getValue();
+        sprintWindow = options.getSprintWindow().getValue();
+        allowCursorChanges = options.getAllowCursorChanges().getValue();
         entityCulling = StandardSettings.getEntityCulling();
         sneaking = options.sneakKey.isPressed();
         sprinting = options.sprintKey.isPressed();
-        client.debugRenderer.toggleShowChunkBorder();
-        chunkborders = client.debugRenderer.toggleShowChunkBorder();
-        hitboxes = client.getEntityRenderDispatcher().shouldRenderHitboxes();
+        attacking = options.attackKey.isPressed();
+        using = options.useKey.isPressed();
         perspective = options.getPerspective();
+        chunkborders = client.debugHudEntryList.getVisibility(DebugHudEntries.CHUNK_BORDERS);
+        hitboxes = client.debugHudEntryList.getVisibility(DebugHudEntries.ENTITY_HITBOXES);
         piedirectory = ((PieChartAccessor) client.getDebugHud().getPieChart()).getCurrentPath();
         hudHidden = options.hudHidden;
         int i = 0;
@@ -217,7 +231,8 @@ public class OptionsCache {
             GameOptionsAccessor.callOnFontOptionsChanged();
         }
         options.getDiscreteMouseScroll().setValue(discreteMouseScroll);
-        options.getInvertYMouse().setValue(invertYMouse);
+        options.getInvertMouseX().setValue(invertXMouse);
+        options.getInvertMouseY().setValue(invertYMouse);
         options.getReducedDebugInfo().setValue(reducedDebugInfo);
         options.getShowSubtitles().setValue(showSubtitles);
         options.getDirectionalAudio().setValue(directionalAudio);
@@ -233,6 +248,8 @@ public class OptionsCache {
         options.getBobView().setValue(bobView);
         options.getSneakToggled().setValue(sneakToggled);
         options.getSprintToggled().setValue(sprintToggled);
+        options.getAttackToggled().setValue(attackToggled);
+        options.getUseToggled().setValue(useToggled);
         options.getMonochromeLogo().setValue(monochromeLogo);
         options.getHideLightningFlashes().setValue(hideLightningFlashes);
         options.getMouseSensitivity().setValue(mouseSensitivity);
@@ -290,6 +307,8 @@ public class OptionsCache {
         options.getMenuBackgroundBlurriness().setValue(menuBackgroundBlurriness);
         options.getMusicFrequency().setValue(musicFrequency);
         options.getShowNowPlayingToast().setValue(showNowPlayingToast);
+        options.getSprintWindow().setValue(sprintWindow);
+        options.getAllowCursorChanges().setValue(allowCursorChanges);
         entityCulling.ifPresent(StandardSettings::setEntityCulling);
         if (options.getSneakToggled().getValue() && (sneaking != options.sneakKey.isPressed())) {
             options.sneakKey.setPressed(true);
@@ -297,10 +316,15 @@ public class OptionsCache {
         if (options.getSprintToggled().getValue() && (sprinting != options.sprintKey.isPressed())) {
             options.sprintKey.setPressed(true);
         }
-        if (client.debugRenderer.toggleShowChunkBorder() != chunkborders) {
-            client.debugRenderer.toggleShowChunkBorder();
+        if (options.getAttackToggled().getValue() && (attacking != options.attackKey.isPressed())) {
+            options.attackKey.setPressed(true);
         }
-        client.getEntityRenderDispatcher().setRenderHitboxes(hitboxes);
+        if (options.getUseToggled().getValue() && (using != options.useKey.isPressed())) {
+            options.useKey.setPressed(true);
+        }
+
+        client.debugHudEntryList.setEntryVisibility(DebugHudEntries.CHUNK_BORDERS, chunkborders);
+        client.debugHudEntryList.setEntryVisibility(DebugHudEntries.ENTITY_HITBOXES, hitboxes);
         options.setPerspective(perspective);
         ((PieChartAccessor) client.getDebugHud().getPieChart()).setCurrentPath(piedirectory);
         options.hudHidden = hudHidden;

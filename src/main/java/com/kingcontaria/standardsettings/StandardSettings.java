@@ -13,6 +13,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.hud.debug.*;
 import net.minecraft.client.option.*;
 import net.minecraft.client.sound.MusicTracker;
 import net.minecraft.client.util.InputUtil;
@@ -63,22 +64,6 @@ public class StandardSettings {
     private static final Field[] entityCulling = new Field[2];
 
     private static final Supplier<Runnable> saveSodiumOptionsSupplier = Suppliers.memoize(() -> {
-        // Sodium 0.5.5 and earlier
-        final var writeChangesMethod = Arrays.stream(SodiumGameOptions.class.getMethods())
-                .filter(method -> method.getName().equals("writeChanges") && method.getParameterCount() == 0)
-                .findAny();
-        if (writeChangesMethod.isPresent()) {
-            return () -> {
-                try {
-                    writeChangesMethod.get().invoke(SodiumClientMod.options());
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException("Failed to access writeChanges when saving Sodium options", e);
-                } catch (InvocationTargetException e) {
-                    LOGGER.error("Failed to save Sodium options via writeChanges", e.getCause());
-                }
-            };
-        }
-
         // Sodium 0.5.6+
         final var writeToDiskMethod = Arrays.stream(SodiumGameOptions.class.getMethods())
                 .filter(method -> method.getName().equals("writeToDisk"))
@@ -203,7 +188,8 @@ public class StandardSettings {
                     case "forceUnicodeFont" -> options.getForceUnicodeFont().setValue(Boolean.parseBoolean(strings[1]));
                     case "japaneseGlyphVariants" -> options.getJapaneseGlyphVariants().setValue(Boolean.parseBoolean(strings[1]));
                     case "discrete" -> options.getDiscreteMouseScroll().setValue(Boolean.parseBoolean(strings[1]));
-                    case "invertYMouse" -> options.getInvertYMouse().setValue(Boolean.parseBoolean(strings[1]));
+                    case "invertXMouse" -> options.getInvertMouseX().setValue(Boolean.parseBoolean(strings[1]));
+                    case "invertYMouse" -> options.getInvertMouseY().setValue(Boolean.parseBoolean(strings[1]));
                     case "reducedDebugInfo" -> options.getReducedDebugInfo().setValue(Boolean.parseBoolean(strings[1]));
                     case "showSubtitles" -> options.getShowSubtitles().setValue(Boolean.parseBoolean(strings[1]));
                     case "directionalAudio" -> options.getDirectionalAudio().setValue(Boolean.parseBoolean(strings[1]));
@@ -221,6 +207,8 @@ public class StandardSettings {
                     case "bobView" -> options.getBobView().setValue(Boolean.parseBoolean(strings[1]));
                     case "toggleCrouch" -> options.getSneakToggled().setValue(Boolean.parseBoolean(strings[1]));
                     case "toggleSprint" -> options.getSprintToggled().setValue(Boolean.parseBoolean(strings[1]));
+                    case "toggleAttack" -> options.getAttackToggled().setValue(Boolean.parseBoolean(strings[1]));
+                    case "toggleUse" -> options.getUseToggled().setValue(Boolean.parseBoolean(strings[1]));
                     case "darkMojangStudiosBackground" -> options.getMonochromeLogo().setValue(Boolean.parseBoolean(strings[1]));
                     case "hideLightningFlashes" -> options.getHideLightningFlashes().setValue(Boolean.parseBoolean(strings[1]));
                     case "mouseSensitivity" -> options.getMouseSensitivity().setValue(Double.parseDouble(strings[1]));
@@ -300,9 +288,11 @@ public class StandardSettings {
                     case "menuBackgroundBlurriness" -> options.getMenuBackgroundBlurriness().setValue(Integer.parseInt(strings[1]));
                     case "musicFrequency" -> options.getMusicFrequency().setValue(MusicTracker.MusicFrequency.valueOf(strings[1]));
                     case "showNowPlayingToast" -> options.getShowNowPlayingToast().setValue(Boolean.parseBoolean(strings[1]));
+                    case "sprintWindow" -> options.getSprintWindow().setValue(Integer.parseInt(strings[1]));
+                    case "allowCursorChanges" -> options.getAllowCursorChanges().setValue(Boolean.parseBoolean(strings[1]));
                     case "key" -> {
                         for (KeyBinding keyBinding : options.allKeys) {
-                            if (string0_split[1].equals(keyBinding.getTranslationKey())) {
+                            if (string0_split[1].equals(keyBinding.getId())) {
                                 keyBinding.setBoundKey(InputUtil.fromTranslationKey(strings[1])); break;
                             }
                         }
@@ -334,11 +324,17 @@ public class StandardSettings {
                         }
                     }
                     case "chunkborders" -> {
-                        if (client.debugRenderer.toggleShowChunkBorder() != Boolean.parseBoolean(strings[1])) {
-                            client.debugRenderer.toggleShowChunkBorder();
-                        }
+                        DebugHudEntryVisibility vis;
+                        if ("f3".equals(strings[1])) vis = DebugHudEntryVisibility.IN_F3;
+                        else vis = Boolean.parseBoolean(strings[1]) ? DebugHudEntryVisibility.ALWAYS_ON : DebugHudEntryVisibility.NEVER;
+                        client.debugHudEntryList.setEntryVisibility(DebugHudEntries.CHUNK_BORDERS, vis);
                     }
-                    case "hitboxes" -> client.getEntityRenderDispatcher().setRenderHitboxes(Boolean.parseBoolean(strings[1]));
+                    case "hitboxes" -> {
+                        DebugHudEntryVisibility vis;
+                        if ("f3".equals(strings[1])) vis = DebugHudEntryVisibility.IN_F3;
+                        else vis = Boolean.parseBoolean(strings[1]) ? DebugHudEntryVisibility.ALWAYS_ON : DebugHudEntryVisibility.NEVER;
+                        client.debugHudEntryList.setEntryVisibility(DebugHudEntries.ENTITY_HITBOXES, vis);
+                    }
                     case "perspective" -> options.setPerspective(Perspective.values()[Integer.parseInt(strings[1]) % 3]);
                     case "piedirectory" -> {
                         if (!strings[1].split("\\.")[0].equals("root")) break;
@@ -547,7 +543,8 @@ public class StandardSettings {
                 "forceUnicodeFont:" + options.getForceUnicodeFont().getValue() + l +
                 "japaneseGlyphVariants:" + options.getJapaneseGlyphVariants().getValue() + l +
                 "discrete_mouse_scroll:" + options.getDiscreteMouseScroll().getValue() + l +
-                "invertYMouse:" + options.getInvertYMouse().getValue() + l +
+                "invertXMouse:" + options.getInvertMouseX().getValue() + l +
+                "invertYMouse:" + options.getInvertMouseY().getValue() + l +
                 "reducedDebugInfo:" + options.getReducedDebugInfo().getValue() + l +
                 "showSubtitles:" + options.getShowSubtitles().getValue() + l +
                 "directionalAudio:" + options.getDirectionalAudio().getValue() + l +
@@ -556,6 +553,8 @@ public class StandardSettings {
                 "bobView:" + options.getBobView().getValue() + l +
                 "toggleCrouch:" + options.getSneakToggled().getValue() + l +
                 "toggleSprint:" + options.getSprintToggled().getValue() + l +
+                "toggleAttack:" + options.getAttackToggled().getValue() + l +
+                "toggleUse:" + options.getUseToggled().getValue() + l +
                 "darkMojangStudiosBackground:" + options.getMonochromeLogo().getValue() + l +
                 "hideLightningFlashes:" + options.getHideLightningFlashes().getValue() + l +
                 "mouseSensitivity:" + options.getMouseSensitivity().getValue() + l +
@@ -598,14 +597,15 @@ public class StandardSettings {
                 "mouseWheelSensitivity:" + options.getMouseWheelSensitivity().getValue() + l +
                 "rawMouseInput:" + options.getRawMouseInput().getValue() + l +
                 "showAutosaveIndicator:" + options.getShowAutosaveIndicator().getValue() + l +
-               // "chatPreview:" + options.getChatPreview().getValue() + l +
                 "onlyShowSecureChat:" + options.getOnlyShowSecureChat().getValue() + l +
                 "menuBackgroundBlurriness:" + options.getMenuBackgroundBlurriness().getValue() + l +
                 "musicFrequency:" + options.getMusicFrequency().getValue().asString() + l +
-                "showNowPlayingToast:" + options.getShowNowPlayingToast().getValue() + l
+                "showNowPlayingToast:" + options.getShowNowPlayingToast().getValue() + l +
+                "sprintWindow:" + options.getSprintWindow().getValue() + l +
+                "allowCursorChanges:" + options.getAllowCursorChanges().getValue() + l
         );
         for (KeyBinding keyBinding : options.allKeys) {
-            string.append("key_").append(keyBinding.getTranslationKey()).append(":").append(keyBinding.getBoundKeyTranslationKey()).append(l);
+            string.append("key_").append(keyBinding.getId()).append(":").append(keyBinding.getBoundKeyTranslationKey()).append(l);
         }
         for (SoundCategory soundCategory : SoundCategory.values()) {
             string.append("soundCategory_").append(soundCategory.getName()).append(":").append(options.getCategorySoundVolume(soundCategory)).append(l);
@@ -613,7 +613,7 @@ public class StandardSettings {
         for (PlayerModelPart playerModelPart : PlayerModelPart.values()) {
             string.append("modelPart_").append(playerModelPart.getName()).append(":").append(options.isPlayerModelPartEnabled(playerModelPart)).append(l);
         }
-        string.append("entityCulling:").append(getEntityCulling().isPresent() ? getEntityCulling().get() : "").append(l).append("sneaking:").append(l).append("sprinting:").append(l).append("chunkborders:").append(l).append("hitboxes:").append(l).append("perspective:").append(l).append("piedirectory:").append(l).append("f1:").append(l).append("fovOnWorldJoin:").append(l).append("guiScaleOnWorldJoin:").append(l).append("renderDistanceOnWorldJoin:").append(l).append("simulationDistanceOnWorldJoin:").append(l).append("entityDistanceScalingOnWorldJoin:").append(l).append("changeOnResize:false").append(l).append("f3PauseOnWorldLoad:false").append(l).append("firstWorldF3PauseDelay:22");
+        string.append("entityCulling:").append(getEntityCulling().isPresent() ? getEntityCulling().get() : "").append(l).append("sneaking:").append(l).append("sprinting:").append(l).append("attacking:").append(l).append("using:").append(l).append("chunkborders:").append(l).append("hitboxes:").append(l).append("perspective:").append(l).append("piedirectory:").append(l).append("f1:").append(l).append("fovOnWorldJoin:").append(l).append("guiScaleOnWorldJoin:").append(l).append("renderDistanceOnWorldJoin:").append(l).append("simulationDistanceOnWorldJoin:").append(l).append("entityDistanceScalingOnWorldJoin:").append(l).append("changeOnResize:false").append(l).append("f3PauseOnWorldLoad:false").append(l).append("firstWorldF3PauseDelay:22");
 
         return string.toString();
     }

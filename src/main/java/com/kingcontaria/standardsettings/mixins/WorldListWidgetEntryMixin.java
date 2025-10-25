@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 public class WorldListWidgetEntryMixin {
 
-    @Shadow @Final private LevelSummary level;
+    @Shadow @Final LevelSummary level;
 
     @Inject(method = "openReadingWorldScreen", at = @At("HEAD"))
     private void loadCache(CallbackInfo ci) {
