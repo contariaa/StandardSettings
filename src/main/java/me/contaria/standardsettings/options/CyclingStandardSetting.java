@@ -46,6 +46,11 @@ public class CyclingStandardSetting extends StandardSetting<Integer> {
     }
 
     @Override
+    public @NotNull String getName() {
+        return I18n.translate("standardsettings.options." + this.getID());
+    }
+
+    @Override
     protected @NotNull String getDisplayText() {
         return I18n.translate("standardsettings.options." + this.getID() + "." + this.get());
     }

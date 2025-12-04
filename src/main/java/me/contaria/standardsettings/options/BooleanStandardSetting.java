@@ -17,8 +17,6 @@ public class BooleanStandardSetting extends StandardSetting<Boolean> {
     private final Function<GameOptions, Boolean> getter;
     private final BiConsumer<GameOptions, Boolean> setter;
 
-    private boolean value;
-
     public BooleanStandardSetting(String id, @Nullable String category, StandardGameOptions options, Function<GameOptions, Boolean> getter, BiConsumer<GameOptions, Boolean> setter) {
         super(id, category, options);
         this.getter = getter;
@@ -45,6 +43,11 @@ public class BooleanStandardSetting extends StandardSetting<Boolean> {
     @Override
     protected JsonElement valueToJson() {
         return new JsonPrimitive(this.get());
+    }
+
+    @Override
+    public @NotNull String getName() {
+        return I18n.translate("standardsettings.options." + this.getID());
     }
 
     @Override
