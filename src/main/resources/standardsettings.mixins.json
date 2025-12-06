@@ -9,7 +9,8 @@
     "accessors.MinecraftClientAccessor",
     "accessors.SpriteAtlasTextureAccessor",
     "fix.GameOptionsMixin",
-    "fix.LanguageSelectionListWidgetMixin"
+    "fix.LanguageSelectionListWidgetMixin",
+    "fix.OptionSliderWidgetMixin"
   ],
   "injectors": {
     "defaultRequire": 1
