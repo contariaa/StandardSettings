@@ -37,7 +37,7 @@
 	],
 	"depends": {
 		"fabricloader": ">=0.16.0",
-		"minecraft": "1.16.1",
+		"minecraft": ">=1.16 <=1.16.1",
 		"speedrunapi": ">=2.0"
 	},
 	"breaks": {
