@@ -8,11 +8,12 @@ import me.contaria.speedrunapi.config.api.SpeedrunConfig;
 import me.contaria.speedrunapi.config.api.SpeedrunOption;
 import me.contaria.speedrunapi.config.api.annotations.Config;
 import me.contaria.speedrunapi.util.TextUtil;
+import me.contaria.standardsettings.mixin.accessors.WindowAccessor;
 import me.contaria.standardsettings.options.*;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ConfirmScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.options.LanguageOptionsScreen;
+import net.minecraft.client.gui.Screen;
+import net.minecraft.client.gui.menu.YesNoScreen;
+import net.minecraft.client.gui.menu.options.LanguageOptionsScreen;
 import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.options.*;
@@ -62,17 +63,6 @@ public class StandardSettingsConfig implements SpeedrunConfig {
     @SuppressWarnings("unused")
     public boolean toggleAll = true;
 
-    @Config.Category("f3")
-    public boolean autoF3Esc = false;
-
-    @SuppressWarnings("all")
-    @Config.Category("f3")
-    @Config.Numbers.Whole.Bounds(max = 100)
-    private int firstAutoF3EscDelay = 22;
-
-    @Config.Ignored
-    public int autoF3EscDelay;
-
     @Config.Category("onWorldJoin")
     public boolean triggerOnResize = false;
 
@@ -90,12 +80,12 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("fullscreenResolution", "options.video", StandardGameOptions::getFullscreenResolution, StandardGameOptions::setFullscreenResolution, option -> VideoMode.fromString(option.get()).map(VideoMode::toString).orElse(I18n.translate("options.fullscreen.current")), option -> {
             // see FullScreenOption and VideoOptionsScreen#init
             Window window = MinecraftClient.getInstance().window;
-            Monitor monitor = window.getMonitor();
+            Monitor monitor = ((WindowAccessor) (Object) window).standardsettings$getMonitor();
             return new DoubleOption("options.fullscreen.resolution", -1.0, monitor != null ? monitor.getVideoModeCount() - 1.0 : -1.0, 1.0f, options -> {
                 if (monitor == null) {
                     return -1.0;
                 }
-                return VideoMode.fromString(option.get()).map(monitor::findClosestVideoModeIndex).orElse(-1).doubleValue();
+                return VideoMode.fromString(option.get()).map(StandardSettings::findClosestVideoModeIndex).orElse(-1).doubleValue();
             }, (options, value) -> {
                 if (monitor == null) {
                     return;
@@ -132,7 +122,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         for (PlayerModelPart playerModelPart : PlayerModelPart.values()) {
             this.register(new PlayerModelPartStandardSetting("modelPart_" + playerModelPart.getName(), "options.skinCustomisation", this.options, playerModelPart));
         }
-        this.register("mainHand", "options.skinCustomisation", Option.MAIN_HAND, options -> options.mainArm.ordinal());
+        this.register("mainHand", "options.skinCustomisation", Option.MAIN_HAND, options -> options.mainHand.ordinal());
 
         // Music & Sounds
         for (SoundCategory soundCategory : SoundCategory.values()) {
@@ -157,12 +147,6 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("mouseWheelSensitivity", "options.mouse_settings", Option.MOUSE_WHEEL_SENSITIVITY);
         this.register("discrete_mouse_scroll", "options.mouse_settings", Option.DISCRETE_MOUSE_SCROLL);
         this.register("touchscreen", "options.mouse_settings", Option.TOUCHSCREEN);
-        this.register(new BooleanOptionStandardSetting("rawMouseInput", "options.mouse_settings", this.options, Option.RAW_MOUSE_INPUT) {
-            @Override
-            public boolean hasWidget() {
-                return super.hasWidget() && InputUtil.method_21735();
-            }
-        });
 
         // Controls
         this.register("autoJump", "options.controls", Option.AUTO_JUMP);
@@ -271,7 +255,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
     private void confirmToggleAll(ButtonWidget button) {
         MinecraftClient client = MinecraftClient.getInstance();
         Screen screen = client.currentScreen;
-        client.openScreen(new ConfirmScreen(
+        client.openScreen(new YesNoScreen(
                 confirmed -> {
                     if (confirmed) {
                         this.toggleAll = !this.toggleAll;
@@ -303,7 +287,6 @@ public class StandardSettingsConfig implements SpeedrunConfig {
     public void finishInitialization(SpeedrunConfigContainer<?> container) {
         this.configContainer = container;
         this.fileLastModified = this.getConfigFile().lastModified();
-        this.autoF3EscDelay = this.firstAutoF3EscDelay;
     }
 
     @Override

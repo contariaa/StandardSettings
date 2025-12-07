@@ -10,6 +10,7 @@
     "accessors.LanguageOptionsScreenAccessor",
     "accessors.OptionAccessor",
     "accessors.SpriteAtlasTextureAccessor",
+    "accessors.WindowAccessor",
     "fix.GameOptionsMixin",
     "fix.KeyboardMixin",
     "fix.LanguageOptionsScreenMixin",

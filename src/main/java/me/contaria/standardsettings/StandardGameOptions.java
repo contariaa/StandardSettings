@@ -1,5 +1,6 @@
 package me.contaria.standardsettings;
 
+import me.contaria.standardsettings.mixin.accessors.WindowAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.util.VideoMode;
@@ -37,7 +38,7 @@ public class StandardGameOptions extends GameOptions {
         if (options instanceof StandardGameOptions) {
             options.fullscreenResolution = value;
         } else {
-            MinecraftClient.getInstance().window.setVideoMode(VideoMode.fromString(value));
+            MinecraftClient.getInstance().window.method_4505(VideoMode.fromString(value).map(StandardSettings::findClosestVideoModeIndex).orElse(-1) + 1);
         }
     }
 

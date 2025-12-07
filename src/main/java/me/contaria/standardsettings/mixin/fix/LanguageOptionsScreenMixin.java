@@ -3,7 +3,7 @@ package me.contaria.standardsettings.mixin.fix;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import me.contaria.standardsettings.StandardGameOptions;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.options.LanguageOptionsScreen;
+import net.minecraft.client.gui.menu.options.LanguageOptionsScreen;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.resource.language.LanguageDefinition;
 import net.minecraft.client.resource.language.LanguageManager;

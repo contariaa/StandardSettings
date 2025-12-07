@@ -87,8 +87,7 @@ public abstract class OptionMixin {
     @ModifyExpressionValue(
             method = {
                     "method_18579", // VSYNC
-                    "method_18529", // FULLSCREEN
-                    "method_21669"  // RAW_MOUSE_INPUT
+                    "method_18529" // FULLSCREEN
             },
             at = @At(
                     value = "FIELD",

@@ -2,12 +2,15 @@ package me.contaria.standardsettings;
 
 import me.contaria.standardsettings.mixin.accessors.BakedModelManagerAccessor;
 import me.contaria.standardsettings.mixin.accessors.SpriteAtlasTextureAccessor;
+import me.contaria.standardsettings.mixin.accessors.WindowAccessor;
 import me.contaria.standardsettings.options.StandardSetting;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.resource.language.LanguageDefinition;
 import net.minecraft.client.resource.language.LanguageManager;
 import net.minecraft.client.texture.SpriteAtlasTexture;
+import net.minecraft.client.util.Monitor;
+import net.minecraft.client.util.VideoMode;
 import net.minecraft.client.util.Window;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +31,6 @@ public class StandardSettings {
 
     public static String lastWorld;
     public static boolean onWorldJoinPending;
-    public static boolean autoF3EscPending;
 
     public static void reset() {
         config.update();
@@ -98,7 +100,6 @@ public class StandardSettings {
 
     public static void resetPendingActions() {
         onWorldJoinPending = false;
-        autoF3EscPending = false;
     }
 
     public static void saveToWorldFile(String worldName) {
@@ -119,5 +120,15 @@ public class StandardSettings {
 
     public static boolean isEnabled() {
         return config.toggleStandardSettings;
+    }
+
+    public static int findClosestVideoModeIndex(VideoMode videoMode) {
+        Monitor monitor = ((WindowAccessor) (Object) MinecraftClient.getInstance().window).standardsettings$getMonitor();
+        for (int i = 0; i < monitor.getVideoModeCount(); i++) {
+            if (videoMode.equals(monitor.getVideoMode(i))) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

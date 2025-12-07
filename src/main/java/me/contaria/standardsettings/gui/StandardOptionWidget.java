@@ -34,7 +34,7 @@ public class StandardOptionWidget extends AbstractButtonWidget implements Parent
     private void setEnabled(boolean enabled) {
         this.mainWidget.active = enabled;
         if (this.mainWidget instanceof TextFieldWidget) {
-            ((TextFieldWidget) this.mainWidget).setEditable(enabled);
+            ((TextFieldWidget) this.mainWidget).setIsEditable(enabled);
             ((TextFieldWidget) this.mainWidget).method_1856(enabled);
         }
     }

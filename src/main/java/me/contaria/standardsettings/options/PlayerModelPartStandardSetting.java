@@ -43,7 +43,7 @@ public class PlayerModelPartStandardSetting extends StandardSetting<Boolean> {
 
     @Override
     public @NotNull String getName() {
-        return this.playerModelPart.getOptionName().asFormattedString();
+        return this.playerModelPart.getLocalizedName().getFormattedText();
     }
 
     @Override

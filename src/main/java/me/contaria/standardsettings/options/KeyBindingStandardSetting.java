@@ -3,13 +3,13 @@ package me.contaria.standardsettings.options;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import me.contaria.standardsettings.StandardSettings;
+import net.minecraft.ChatFormat;
 import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.util.Formatting;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,11 +75,11 @@ public class KeyBindingStandardSetting extends StandardSetting<InputUtil.KeyCode
     public @NotNull String getDisplayText() {
         String text = this.getLocalizedName(this.value);
         if (StandardSettings.config.isFocusedKeyBinding(this)) {
-            return Formatting.WHITE + "> " + Formatting.YELLOW + text + Formatting.WHITE + " <";
+            return ChatFormat.WHITE + "> " + ChatFormat.YELLOW + text + ChatFormat.WHITE + " <";
         } else {
             for (StandardSetting<?> setting : StandardSettings.config.standardSettings) {
                 if (setting != this && setting instanceof KeyBindingStandardSetting && setting.isEnabled() && this.value.equals(((KeyBindingStandardSetting) setting).value)) {
-                    return Formatting.RED + text;
+                    return ChatFormat.RED + text;
                 }
             }
         }

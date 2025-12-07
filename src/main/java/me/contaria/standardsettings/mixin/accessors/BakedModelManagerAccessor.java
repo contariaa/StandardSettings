@@ -9,9 +9,9 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(BakedModelManager.class)
 public interface BakedModelManagerAccessor {
-    @Invoker("prepare")
+    @Invoker("method_18178")
     ModelLoader standardsettings$prepare(ResourceManager resourceManager, Profiler profiler);
 
-    @Invoker("apply")
+    @Invoker("method_18179")
     void standardsettings$apply(ModelLoader modelLoader, ResourceManager resourceManager, Profiler profiler);
 }
