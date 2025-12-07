@@ -1,6 +1,6 @@
 package me.contaria.standardsettings;
 
-import me.contaria.standardsettings.mixin.accessors.WindowAccessor;
+import me.contaria.standardsettings.mixin.accessors.MinecraftClientAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.util.VideoMode;
@@ -10,6 +10,7 @@ import java.io.File;
 public class StandardGameOptions extends GameOptions {
     private boolean hitBoxes;
     private boolean chunkBorders;
+    private String pieDirectory;
 
     public StandardGameOptions(MinecraftClient client, File optionsFile) {
         super(client, optionsFile);
@@ -70,6 +71,28 @@ public class StandardGameOptions extends GameOptions {
             ((StandardGameOptions) options).chunkBorders = value;
         } else if (MinecraftClient.getInstance().debugRenderer.toggleShowChunkBorder() != value) {
             MinecraftClient.getInstance().debugRenderer.toggleShowChunkBorder();
+        }
+    }
+
+    public static String getPieDirectory(GameOptions options) {
+        String pieDirectory;
+        if (options instanceof StandardGameOptions) {
+            pieDirectory = ((StandardGameOptions) options).pieDirectory;
+        } else {
+            pieDirectory = ((MinecraftClientAccessor) MinecraftClient.getInstance()).standardsettings$getOpenProfilerSection();
+        }
+        return pieDirectory;
+    }
+
+    public static void setPieDirectory(GameOptions options, String value) {
+        if (!value.startsWith("root")) {
+            value = "root";
+        }
+        value = value.trim();
+        if (options instanceof StandardGameOptions) {
+            ((StandardGameOptions) options).pieDirectory = value;
+        } else {
+            ((MinecraftClientAccessor) MinecraftClient.getInstance()).standardsettings$setOpenProfilerSection(value);
         }
     }
 }

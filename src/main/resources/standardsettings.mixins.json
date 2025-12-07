@@ -8,6 +8,7 @@
     "accessors.BooleanOptionAccessor",
     "accessors.DoubleOptionAccessor",
     "accessors.LanguageOptionsScreenAccessor",
+    "accessors.MinecraftClientAccessor",
     "accessors.OptionAccessor",
     "accessors.SpriteAtlasTextureAccessor",
     "accessors.WindowAccessor",

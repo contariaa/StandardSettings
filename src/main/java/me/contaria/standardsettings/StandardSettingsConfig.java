@@ -16,6 +16,7 @@ import net.minecraft.client.gui.menu.YesNoScreen;
 import net.minecraft.client.gui.menu.options.LanguageOptionsScreen;
 import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.options.*;
 import net.minecraft.client.render.entity.PlayerModelPart;
 import net.minecraft.client.resource.language.I18n;
@@ -179,6 +180,30 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("advancedItemTooltips", "f3", new BooleanOption("standardsettings.options.advancedItemTooltips", options -> options.advancedItemTooltips, (options, value) -> options.advancedItemTooltips = value));
         this.register("hitboxes", "f3", new BooleanOption("standardsettings.options.hitboxes", StandardGameOptions::getHitBoxes, StandardGameOptions::setHitBoxes)).disable();
         this.register("chunkborders", "f3", new BooleanOption("standardsettings.options.chunkborders", StandardGameOptions::getChunkBorders, StandardGameOptions::setChunkBorders)).disable();
+        this.register("pieDirectory", "f3", StandardGameOptions::getPieDirectory, StandardGameOptions::setPieDirectory, StandardSetting::get, option -> {
+            TextFieldWidget widget = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, 120, 20, option.getName());
+            widget.setMaxLength(128);
+            widget.method_1890(string -> string != null && (string.startsWith("root") || string.isEmpty()));
+            widget.setText(option.get());
+            widget.setChangedListener(string -> {
+                if (string.isEmpty()) {
+                    widget.setText("root");
+                    return;
+                }
+                option.set(string);
+                for (String suggestion : new String[]{
+                        "root.gameRenderer.level.entities",
+                        "root.tick.level.entities.blockEntities"
+                }) {
+                    if (string.length() > 5 && !suggestion.equals(string) && suggestion.startsWith(string)) {
+                        widget.setSuggestion(suggestion.replaceFirst(string, "").split("\\.")[0]);
+                        return;
+                    }
+                }
+                widget.setSuggestion(null);
+            });
+            return widget;
+        }).disable();
 
         // More Settings
         this.register("perspective", "more", new CyclingOption("standardsettings.options.perspective", (options, amount) -> options.perspective = (options.perspective + amount) % 3, (options, option) -> I18n.translate("standardsettings.options.perspective." + options.perspective)), options -> options.perspective).disable();
