@@ -11,7 +11,10 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class OptionSliderWidgetMixin {
 
     @ModifyExpressionValue(
-            method = "<init>(IIILnet/minecraft/client/option/GameOptions$Option;FF)V",
+            method = {
+                    "mouseDragged",
+                    "isMouseOver"
+            },
             at = @At(
                     value = "FIELD",
                     target = "Lnet/minecraft/client/MinecraftClient;options:Lnet/minecraft/client/option/GameOptions;"

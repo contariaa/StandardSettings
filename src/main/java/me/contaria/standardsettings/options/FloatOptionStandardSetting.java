@@ -5,9 +5,7 @@ import com.google.gson.JsonPrimitive;
 import me.contaria.standardsettings.StandardGameOptions;
 import me.contaria.standardsettings.gui.StandardOptionSliderWidget;
 import me.contaria.standardsettings.mixin.accessors.ButtonWidgetAccessor;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.OptionSliderWidget;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.resource.language.I18n;
 import org.jetbrains.annotations.NotNull;
@@ -55,13 +53,7 @@ public class FloatOptionStandardSetting extends StandardSetting<Float> {
 
     @Override
     public @NotNull ButtonWidget createMainWidget() {
-        StandardOptionSliderWidget widget = new StandardOptionSliderWidget(this.option.getOrdinal(), 0, 0, this.option, this, this.options) {
-            @Override
-            public void render(MinecraftClient client, int mouseX, int mouseY) {
-                this.message = FloatOptionStandardSetting.this.getText();
-                super.render(client, mouseX, mouseY);
-            }
-        };
+        StandardOptionSliderWidget widget = new StandardOptionSliderWidget(this.option.getOrdinal(), 0, 0, this.option, this, this.options);
         ((ButtonWidgetAccessor) widget).standardsettings$setWidth(120);
         return widget;
     }
