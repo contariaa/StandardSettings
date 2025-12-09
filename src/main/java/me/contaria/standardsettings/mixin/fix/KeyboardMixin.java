@@ -14,20 +14,36 @@ public abstract class KeyboardMixin {
             method = "onKey",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/option/KeyBinding;matchesKey(II)Z"
+                    target = "Lnet/minecraft/client/option/KeyBinding;matchesKey(II)Z",
+                    ordinal = 0
             ),
             slice = @Slice(
                     from = @At(
                             value = "FIELD",
                             target = "Lnet/minecraft/client/option/GameOptions;keyFullscreen:Lnet/minecraft/client/option/KeyBinding;"
-                    ),
-                    to = @At(
-                            value = "INVOKE",
-                            target = "Lnet/minecraft/client/util/ScreenshotRecorder;saveScreenshot(Ljava/io/File;Lnet/minecraft/client/gl/Framebuffer;Ljava/util/function/Consumer;)V"
                     )
             )
     )
-    private boolean dontToggleFullscreenOrScreenshotWhenFocusingKeyBinding(boolean matchesKey) {
+    private boolean dontToggleFullscreenWhenFocusingKeyBinding(boolean matchesKey) {
+        return matchesKey && !StandardSettings.config.hasFocusedKeyBinding();
+    }
+
+
+    @ModifyExpressionValue(
+            method = "onKey",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/option/KeyBinding;matchesKey(II)Z",
+                    ordinal = 0
+            ),
+            slice = @Slice(
+                    from = @At(
+                            value = "FIELD",
+                            target = "Lnet/minecraft/client/option/GameOptions;keyScreenshot:Lnet/minecraft/client/option/KeyBinding;"
+                    )
+            )
+    )
+    private boolean dontScreenshotWhenFocusingKeyBinding(boolean matchesKey) {
         return matchesKey && !StandardSettings.config.hasFocusedKeyBinding();
     }
 }
