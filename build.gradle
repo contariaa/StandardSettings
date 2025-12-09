@@ -33,7 +33,7 @@ dependencies {
 	modImplementation "com.github.contariaa:SpeedrunAPI:59eeb4fea2"
 
 	// check for the latest versions at https://modrinth.com/mod/sodium/versions
-	modCompileOnly "maven.modrinth:sodium:mc1.18.2-0.4.1"
+	modCompileOnly "maven.modrinth:sodium:mc1.18.1-0.4.0-alpha6"
 }
 
 loom {

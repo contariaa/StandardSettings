@@ -225,7 +225,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.registerBoolean("autoJump", "options.controls", Option.AUTO_JUMP);
         this.registerBoolean("toggleCrouch", "options.controls", Option.SNEAK_TOGGLED);
         this.registerBoolean("toggleSprint", "options.controls", Option.SPRINT_TOGGLED);
-        KeyBinding[] keyBindings = ArrayUtils.clone(MinecraftClient.getInstance().options.allKeys);
+        KeyBinding[] keyBindings = ArrayUtils.clone(MinecraftClient.getInstance().options.keysAll);
         Arrays.sort(keyBindings);
         for (KeyBinding keyBinding : keyBindings) {
             this.register(new KeyBindingStandardSetting("key_" + keyBinding.getTranslationKey(), keyBinding.getCategory(), keyBinding));
