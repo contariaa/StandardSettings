@@ -55,7 +55,7 @@ public class PlayerModelPartStandardSetting extends StandardSetting<Boolean> {
     @Override
     public @NotNull ClickableWidget createMainWidget() {
         return new ButtonWidget(0, 0, 120, 20, this.getText(), button -> {
-            this.options.togglePlayerModelPart(this.playerModelPart, this.options.isPlayerModelPartEnabled(this.playerModelPart));
+            this.options.togglePlayerModelPart(this.playerModelPart, !this.options.isPlayerModelPartEnabled(this.playerModelPart));
             button.setMessage(this.getText());
         });
     }
