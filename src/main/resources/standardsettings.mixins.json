@@ -11,6 +11,7 @@
     "accessors.SpriteAtlasTextureAccessor",
     "fix.GameOptionsMixin",
     "fix.LanguageSelectionListWidgetMixin",
+    "fix.MinecraftClientMixin",
     "fix.OptionSliderWidgetMixin"
   ],
   "injectors": {
