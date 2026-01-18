@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FloatOptionStandardSetting extends StandardSetting<Float> {
-    private final GameOptions.Option option;
+    protected final GameOptions.Option option;
 
     public FloatOptionStandardSetting(String id, @Nullable String category, StandardGameOptions options, GameOptions.Option option) {
         super(id, category, options);

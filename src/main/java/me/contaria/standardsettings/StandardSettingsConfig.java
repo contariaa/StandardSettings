@@ -8,6 +8,8 @@ import me.contaria.speedrunapi.config.api.SpeedrunConfig;
 import me.contaria.speedrunapi.config.api.SpeedrunOption;
 import me.contaria.speedrunapi.config.api.annotations.Config;
 import me.contaria.speedrunapi.config.api.gui.CallbackButtonWidget;
+import me.contaria.standardsettings.gui.StandardOptionSliderWidget;
+import me.contaria.standardsettings.mixin.accessors.ButtonWidgetAccessor;
 import me.contaria.standardsettings.options.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ConfirmScreen;
@@ -93,7 +95,46 @@ public class StandardSettingsConfig implements SpeedrunConfig {
                 options.guiScale = Math.max(0, value);
             }
         });
-        this.register("gamma", "options.video", GameOptions.Option.BRIGHTNESS);
+        this.register(new FloatOptionStandardSetting("gamma", "options.video", this.options, GameOptions.Option.BRIGHTNESS) {
+            @Override
+            public void set(GameOptions options, Float value) {
+                options.gamma = Math.max(0.0f, Math.min(5.0f, value));
+            }
+
+            @Override
+            public @NotNull ButtonWidget createMainWidget() {
+                StandardOptionSliderWidget widget = new StandardOptionSliderWidget(this.option.getOrdinal(), 0, 0, this.option, this, this.options) {
+                    @Override
+                    protected void mouseDragged(MinecraftClient client, int mouseX, int mouseY) {
+                        super.mouseDragged(client, mouseX, mouseY);
+                        this.setting.set(this.setting.get() * 5.0f);
+                        this.message = this.setting.getText();
+                    }
+
+                    @Override
+                    public boolean isMouseOver(MinecraftClient client, int mouseX, int mouseY) {
+                        boolean isMouseOver = super.isMouseOver(client, mouseX, mouseY);
+                        this.setting.set(this.setting.get() * 5.0f);
+                        this.message = this.setting.getText();
+                        return isMouseOver;
+                    }
+                };
+                ((ButtonWidgetAccessor) widget).standardsettings$setWidth(120);
+                return widget;
+            }
+
+            @Override
+            public @NotNull String getDisplayText() {
+                float value = this.get();
+                if (value == 0.0f) {
+                    return I18n.translate("options.gamma.min");
+                }
+                if (value == 1.0f) {
+                    return I18n.translate("options.gamma.max");
+                }
+                return "+" + (int) (value * 100.0f) + "%";
+            }
+        });
         this.register("renderClouds", "options.video", GameOptions.Option.SHOW_CLOUDS, options -> options.cloudMode);
         this.register("particles", "options.video", GameOptions.Option.PARTICLES, options -> options.particle);
         this.register("fullscreen", "options.video", GameOptions.Option.USE_FULLSCREEN);

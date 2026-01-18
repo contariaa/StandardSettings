@@ -10,8 +10,8 @@ public class StandardOptionSliderWidget extends OptionSliderWidget {
     public final FloatOptionStandardSetting setting;
     public final GameOptions options;
 
-    public StandardOptionSliderWidget(int i, int j, int k, GameOptions.Option option, FloatOptionStandardSetting setting, GameOptions options) {
-        super(i, j, k, option);
+    public StandardOptionSliderWidget(int id, int x, int y, GameOptions.Option option, FloatOptionStandardSetting setting, GameOptions options) {
+        super(id, x, y, option);
         this.setting = setting;
         this.options = options;
 
