@@ -75,7 +75,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("realmsNotifications", "menu.options", GameOptions.Option.REALMS_NOTIFICATIONS);
 
         // Video Settings
-        this.register("fancyGraphics", "options.video", GameOptions.Option.GRAPHICS);
+        this.register("fancyGraphics", "options.video", GameOptions.Option.GRAPHICS, options -> options.fancyGraphics ? 0 : 1);
         this.register("renderDistance", "options.video", GameOptions.Option.RENDER_DISTANCE);
         this.register("ao", "options.video", GameOptions.Option.AMBIENT_OCCLUSION, options -> options.ao);
         this.register("maxFps", "options.video", GameOptions.Option.MAX_FPS);
