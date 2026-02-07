@@ -116,6 +116,6 @@ public class StandardSettings {
     }
 
     public static boolean isEnabled() {
-        return config.toggleStandardSettings;
+        return !config.showIntroductionScreen && config.toggleStandardSettings;
     }
 }

@@ -63,7 +63,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
     private long fileLastModified;
 
     @Config.Hide
-    private boolean showIntroductionScreen = true;
+    public boolean showIntroductionScreen = true;
 
     public boolean toggleStandardSettings = true;
 
