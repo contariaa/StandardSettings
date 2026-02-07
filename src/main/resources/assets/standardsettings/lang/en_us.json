@@ -34,5 +34,8 @@
   "standardsettings.options.sneaking": "Sneak Toggled",
   "standardsettings.options.sprinting": "Sprint Toggled",
 
+  "standardsettings.gui.introduction.title": "Do you want to enable StandardSettings?",
+  "standardsettings.gui.introduction.description": "StandardSettings will reset your settings to a configured default everytime you create a new world.\nIf you're unsure, it's probably best to wait and set it up at a later time.",
+
   "options.chat.delay_instant": "Chat Delay"
 }

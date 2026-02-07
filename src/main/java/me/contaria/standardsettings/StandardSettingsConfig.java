@@ -1,11 +1,13 @@
 package me.contaria.standardsettings;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.blaze3d.platform.GlStateManager;
 import me.contaria.speedrunapi.config.SpeedrunConfigAPI;
 import me.contaria.speedrunapi.config.SpeedrunConfigContainer;
 import me.contaria.speedrunapi.config.api.SpeedrunConfig;
+import me.contaria.speedrunapi.config.api.SpeedrunConfigParsedMetadata;
 import me.contaria.speedrunapi.config.api.SpeedrunOption;
 import me.contaria.speedrunapi.config.api.annotations.Config;
 import me.contaria.speedrunapi.util.TextUtil;
@@ -59,6 +61,9 @@ public class StandardSettingsConfig implements SpeedrunConfig {
     private SpeedrunConfigContainer<?> configContainer;
     @Config.Ignored
     private long fileLastModified;
+
+    @Config.Hide
+    private boolean showIntroductionScreen = true;
 
     public boolean toggleStandardSettings = true;
 
@@ -426,7 +431,29 @@ public class StandardSettingsConfig implements SpeedrunConfig {
     @Override
     public @NotNull Screen createConfigScreen(Screen parent) {
         this.update();
+        if (this.showIntroductionScreen) {
+            return new ConfirmScreen(enable -> {
+                if (enable) {
+                    this.showIntroductionScreen = false;
+                    MinecraftClient.getInstance().openScreen(SpeedrunConfig.super.createConfigScreen(parent));
+                } else {
+                    MinecraftClient.getInstance().openScreen(parent);
+                }
+            }, TextUtil.translatable("standardsettings.gui.introduction.title"), TextUtil.translatable("standardsettings.gui.introduction.description"));
+        }
         return SpeedrunConfig.super.createConfigScreen(parent);
+    }
+
+    @Override
+    public int getDataVersion() {
+        return 1;
+    }
+
+    @Override
+    public void onLoad(JsonObject jsonObject, SpeedrunConfigParsedMetadata metadata) {
+        if (metadata.getDataVersion() < 1) {
+            this.showIntroductionScreen = false;
+        }
     }
 
     @Override
