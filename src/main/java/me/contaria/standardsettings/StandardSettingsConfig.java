@@ -277,7 +277,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.onWorldJoin(new DoubleOptionStandardSetting("fovOnWorldJoin", "onWorldJoin", this.optionsOnWorldJoin, Option.FOV)).disable();
         this.onWorldJoin(new DoubleOptionStandardSetting("renderDistanceOnWorldJoin", "onWorldJoin", this.optionsOnWorldJoin, Option.RENDER_DISTANCE)).disable();
         this.onWorldJoin(new DoubleOptionStandardSetting("entityDistanceScalingOnWorldJoin", "onWorldJoin", this.optionsOnWorldJoin, Option.ENTITY_DISTANCE_SCALING)).disable();
-        this.onWorldJoin(new CyclingOptionStandardSetting<Integer>("guiScaleOnWorldJoin", "options.video", this.options, (CyclingOption<Integer>) Option.GUI_SCALE) {
+        this.onWorldJoin(new CyclingOptionStandardSetting<Integer>("guiScaleOnWorldJoin", "onWorldJoin", this.options, (CyclingOption<Integer>) Option.GUI_SCALE) {
             @Override
             public void set(GameOptions options, Integer value) {
                 options.guiScale = Math.max(0, value);
