@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StandardOptionWidget extends AbstractButtonWidget implements ParentElement {
-    private final AbstractButtonWidget mainWidget;
+    private AbstractButtonWidget mainWidget;
     private final AbstractButtonWidget toggle;
     private Element focused;
     private boolean isDragging;
@@ -38,6 +38,10 @@ public class StandardOptionWidget extends AbstractButtonWidget implements Parent
             ((TextFieldWidget) this.mainWidget).setEditable(enabled);
             ((TextFieldWidget) this.mainWidget).setFocusUnlocked(enabled);
         }
+    }
+
+    protected void setMainWidget(AbstractButtonWidget widget) {
+        this.mainWidget = widget;
     }
 
     @Override

@@ -9,6 +9,7 @@
     "accessors.DoubleOptionAccessor",
     "accessors.MinecraftClientAccessor",
     "accessors.OptionAccessor",
+    "accessors.SliderWidgetAccessor",
     "fix.GameOptionsMixin",
     "fix.KeyboardMixin",
     "fix.LanguageOptionsScreenMixin",
@@ -16,9 +17,5 @@
   ],
   "injectors": {
     "defaultRequire": 1
-  },
-  "mixins": [
-    "accessors.GameOptionsScreenAccessor",
-    "fix.LanguageSelectionListWidgetMixin"
-  ]
+  }
 }

@@ -72,7 +72,7 @@ public abstract class StandardSetting<T> implements SpeedrunOption<T> {
     }
 
     @Override
-    public final @NotNull AbstractButtonWidget createWidget() {
+    public @NotNull AbstractButtonWidget createWidget() {
         return new StandardOptionWidget(this, this.createMainWidget());
     }
 
