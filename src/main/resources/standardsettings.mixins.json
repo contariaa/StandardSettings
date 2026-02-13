@@ -9,6 +9,7 @@
     "accessors.MinecraftClientAccessor",
     "accessors.OptionSliderWidgetAccessor",
     "accessors.SpriteAtlasTextureAccessor",
+    "accessors.TextFieldWidgetAccessor",
     "fix.GameOptionsMixin",
     "fix.LanguageSelectionListWidgetMixin",
     "fix.MinecraftClientMixin",

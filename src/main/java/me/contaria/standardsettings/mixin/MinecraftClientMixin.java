@@ -37,7 +37,7 @@ public abstract class MinecraftClientMixin {
             )
     )
     private void reset(String name, String displayName, LevelInfo levelInfo, CallbackInfo ci, @Share("isNewWorld") LocalBooleanRef isNewWorld) {
-        if (!MinecraftClient.getInstance().isOnThread() || !isNewWorld.get()) {
+        if (!MinecraftClient.getInstance().method_6640() || !isNewWorld.get()) {
             return;
         }
         StandardSettings.createCache();
@@ -51,7 +51,7 @@ public abstract class MinecraftClientMixin {
             at = @At("TAIL")
     )
     private void onWorldJoin(String name, String displayName, LevelInfo levelInfo, CallbackInfo ci, @Share("isNewWorld") LocalBooleanRef isNewWorld) {
-        if (!MinecraftClient.getInstance().isOnThread() || !isNewWorld.get()) {
+        if (!MinecraftClient.getInstance().method_6640() || !isNewWorld.get()) {
             return;
         }
         StandardSettings.saveToWorldFile(name);
@@ -89,7 +89,7 @@ public abstract class MinecraftClientMixin {
             at = @At("HEAD")
     )
     private void resetPendingActions(CallbackInfo ci) {
-        if (MinecraftClient.getInstance().isOnThread()) {
+        if (MinecraftClient.getInstance().method_6640()) {
             StandardSettings.resetPendingActions();
         }
     }
@@ -99,7 +99,7 @@ public abstract class MinecraftClientMixin {
             at = @At("HEAD")
     )
     private void loadCache(String name, String displayName, LevelInfo levelInfo, CallbackInfo ci, @Share("isNewWorld") LocalBooleanRef isNewWorld) {
-        if (MinecraftClient.getInstance().isOnThread() && !isNewWorld.get()) {
+        if (MinecraftClient.getInstance().method_6640() && !isNewWorld.get()) {
             StandardSettings.loadCache(name);
         }
     }
@@ -109,7 +109,7 @@ public abstract class MinecraftClientMixin {
             at = @At("TAIL")
     )
     private void setLastWorld(String name, String displayName, LevelInfo levelInfo, CallbackInfo ci) {
-        if (MinecraftClient.getInstance().isOnThread()) {
+        if (MinecraftClient.getInstance().method_6640()) {
             StandardSettings.lastWorld = name;
         }
     }

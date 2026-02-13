@@ -11,6 +11,7 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.sound.SoundCategory;
 import net.minecraft.client.sound.SoundManager;
+import net.minecraft.client.texture.SpriteAtlasTexture;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -33,7 +34,7 @@ public abstract class GameOptionsMixin {
     }
 
     @WrapWithCondition(
-            method = "getBooleanValue",
+            method = "setOption(Lnet/minecraft/client/option/GameOption;I)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/render/WorldRenderer;reload()V"
@@ -44,7 +45,7 @@ public abstract class GameOptionsMixin {
     }
 
     @WrapWithCondition(
-            method = "getBooleanValue",
+            method = "setOption(Lnet/minecraft/client/option/GameOption;I)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/font/TextRenderer;setUnicode(Z)V"
@@ -55,7 +56,7 @@ public abstract class GameOptionsMixin {
     }
 
     @WrapWithCondition(
-            method = "getBooleanValue",
+            method = "setOption(Lnet/minecraft/client/option/GameOption;I)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/MinecraftClient;reloadResources()V"
@@ -66,7 +67,7 @@ public abstract class GameOptionsMixin {
     }
 
     @WrapWithCondition(
-            method = "getBooleanValue",
+            method = "setOption(Lnet/minecraft/client/option/GameOption;I)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/MinecraftClient;toggleFullscreen()V"
@@ -77,13 +78,46 @@ public abstract class GameOptionsMixin {
     }
 
     @WrapWithCondition(
-            method = "getBooleanValue",
+            method = "setOption(Lnet/minecraft/client/option/GameOption;I)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lorg/lwjgl/opengl/Display;setVSyncEnabled(Z)V"
             )
     )
     private boolean doNotSetVsyncEnabled(boolean sync) {
+        return !this.isStandardSettings();
+    }
+
+    @WrapWithCondition(
+            method = "setOption(Lnet/minecraft/client/option/GameOption;F)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/texture/SpriteAtlasTexture;method_7004(I)V"
+            )
+    )
+    private boolean doNotSetAnisotropicFiltering(SpriteAtlasTexture texture, int mipmaps) {
+        return !this.isStandardSettings();
+    }
+
+    @WrapWithCondition(
+            method = "setOption(Lnet/minecraft/client/option/GameOption;F)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/texture/SpriteAtlasTexture;setMaxTextureSize(I)V"
+            )
+    )
+    private boolean doNotSetMipmapLevels(SpriteAtlasTexture texture, int mipmaps) {
+        return !this.isStandardSettings();
+    }
+
+    @WrapWithCondition(
+            method = "setOption(Lnet/minecraft/client/option/GameOption;F)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/MinecraftClient;method_6624()V"
+            )
+    )
+    private boolean doNotReload(MinecraftClient client) {
         return !this.isStandardSettings();
     }
 

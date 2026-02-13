@@ -33,6 +33,7 @@ public class StandardSettings {
     public static boolean autoF3EscPending;
 
     protected static boolean anaglyph3dUpdated;
+    protected static boolean anisotropicFilteringUpdated;
 
     public static void reset() {
         config.update();
@@ -55,7 +56,7 @@ public class StandardSettings {
     public static void updateSettings() {
         MinecraftClient client = MinecraftClient.getInstance();
 
-        Window window = new Window(client);
+        Window window = new Window(client, client.width, client.height);
         Screen screen = client.currentScreen;
         if (screen != null && (screen.width != window.getWidth() || screen.height != window.getHeight())) {
             screen.init(client, window.getWidth(), window.getHeight());
@@ -71,17 +72,20 @@ public class StandardSettings {
             languageManager.reload(client.getResourceManager());
         }
 
+        boolean reload = false;
         TextureManager textureManager = client.getTextureManager();
         SpriteAtlasTexture atlasTexture = client.getSpriteAtlasTexture();
         if (((SpriteAtlasTextureAccessor) atlasTexture).standardsettings$getMaxTextureSize() != client.options.mipmapLevels) {
             atlasTexture.setMaxTextureSize(client.options.mipmapLevels);
-            textureManager.bindTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEX);
-            atlasTexture.setFilter(false, client.options.mipmapLevels > 0);
-            textureManager.reload(client.getResourceManager());
-            anaglyph3dUpdated = false;
+            reload = true;
         } else if (anaglyph3dUpdated) {
+            reload = true;
+        } else if (anisotropicFilteringUpdated) {
+            client.getSpriteAtlasTexture().method_7004(client.options.field_7638);
+            reload = true;
+        }
+        if (reload) {
             textureManager.reload(client.getResourceManager());
-            anaglyph3dUpdated = false;
         }
 
         KeyBinding.updateKeysByCode();
@@ -90,7 +94,8 @@ public class StandardSettings {
     }
 
     public static LanguageDefinition getLanguage(LanguageManager manager, String code) {
-        for (LanguageDefinition language : manager.getAllLanguages()) {
+        for (Object object : manager.getAllLanguages()) {
+            LanguageDefinition language = (LanguageDefinition) object;
             if (language.getCode().equals(code)) {
                 return language;
             }

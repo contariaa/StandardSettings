@@ -3,6 +3,7 @@ package me.contaria.standardsettings;
 import me.contaria.standardsettings.mixin.accessors.MinecraftClientAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.GameOptions;
+import net.minecraft.client.render.entity.EntityRenderDispatcher;
 
 import java.io.File;
 
@@ -30,14 +31,14 @@ public class StandardGameOptions extends GameOptions {
         if (options instanceof StandardGameOptions) {
             return ((StandardGameOptions) options).hitBoxes;
         }
-        return MinecraftClient.getInstance().getEntityRenderManager().getRenderHitboxes();
+        return EntityRenderDispatcher.renderHitboxes;
     }
 
     public static void setHitBoxes(GameOptions options, boolean value) {
         if (options instanceof StandardGameOptions) {
             ((StandardGameOptions) options).hitBoxes = value;
         } else {
-            MinecraftClient.getInstance().getEntityRenderManager().setRenderHitboxes(value);
+            EntityRenderDispatcher.renderHitboxes = value;
         }
     }
 

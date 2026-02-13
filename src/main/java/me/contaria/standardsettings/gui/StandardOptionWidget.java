@@ -3,6 +3,7 @@ package me.contaria.standardsettings.gui;
 import me.contaria.speedrunapi.config.api.gui.ButtonWidgetCallback;
 import me.contaria.speedrunapi.config.api.gui.SpeedrunWidget;
 import me.contaria.standardsettings.mixin.accessors.ButtonWidgetAccessor;
+import me.contaria.standardsettings.mixin.accessors.TextFieldWidgetAccessor;
 import me.contaria.standardsettings.options.StandardSetting;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -44,8 +45,8 @@ public class StandardOptionWidget implements SpeedrunWidget {
             button.render(MinecraftClient.getInstance(), mouseX, mouseY);
         } else {
             TextFieldWidget widget = (TextFieldWidget) this.mainWidget;
-            widget.x = this.x;
-            widget.y = this.y;
+            ((TextFieldWidgetAccessor) widget).standardsettings$setX(this.x);
+            ((TextFieldWidgetAccessor) widget).standardsettings$setY(this.y);
             widget.render();
         }
         this.toggle.x = this.x + 120 + 5;
@@ -87,7 +88,9 @@ public class StandardOptionWidget implements SpeedrunWidget {
     public boolean mouseClicked(int mouseX, int mouseY, int button) {
         if (this.mainWidget instanceof TextFieldWidget) {
             TextFieldWidget widget = (TextFieldWidget) this.mainWidget;
-            if (mouseX >= widget.x && mouseX < widget.x + 120 && mouseY >= widget.y && mouseY < widget.y + 20) {
+            int x = ((TextFieldWidgetAccessor) widget).standardsettings$getX();
+            int y = ((TextFieldWidgetAccessor) widget).standardsettings$getY();
+            if (mouseX >= x && mouseX < x + 120 && mouseY >= y && mouseY < y + 20) {
                 widget.mouseClicked(mouseX, mouseY, button);
                 return true;
             }

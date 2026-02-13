@@ -16,11 +16,10 @@ import net.minecraft.client.gui.screen.ConfirmScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.options.LanguageOptionsScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.PagedEntryListWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.option.GameOption;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.render.entity.PlayerModelPart;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.resource.language.LanguageDefinition;
 import net.minecraft.client.resource.language.LanguageManager;
@@ -71,15 +70,14 @@ public class StandardSettingsConfig implements SpeedrunConfig {
     {
         StandardSettings.config = this;
 
-        this.register("fov", "menu.options", GameOptions.Option.FIELD_OF_VIEW);
-        this.register("realmsNotifications", "menu.options", GameOptions.Option.REALMS_NOTIFICATIONS);
+        this.register("fov", "menu.options", GameOption.FOV);
 
         // Video Settings
-        this.register("fancyGraphics", "options.video", GameOptions.Option.GRAPHICS, options -> options.fancyGraphics ? 0 : 1);
-        this.register("renderDistance", "options.video", GameOptions.Option.RENDER_DISTANCE);
-        this.register("ao", "options.video", GameOptions.Option.AMBIENT_OCCLUSION, options -> options.ao);
-        this.register("maxFps", "options.video", GameOptions.Option.MAX_FPS);
-        this.register(new BooleanOptionStandardSetting("anaglyph3d", "options.video", this.options, GameOptions.Option.ANAGLYPH) {
+        this.register("fancyGraphics", "options.video", GameOption.GRAPHICS, options -> options.fancyGraphics ? 0 : 1);
+        this.register("renderDistance", "options.video", GameOption.RENDER_DISTANCE);
+        this.register("ao", "options.video", GameOption.AMBIENT_OCCLUSION, options -> options.ao);
+        this.register("maxFps", "options.video", GameOption.FRAMERATE_LIMIT);
+        this.register(new BooleanOptionStandardSetting("anaglyph3d", "options.video", this.options, GameOption.ANAGLYPH) {
             @Override
             protected void set(GameOptions options, Boolean value) {
                 if (value != this.get()) {
@@ -88,14 +86,15 @@ public class StandardSettingsConfig implements SpeedrunConfig {
                 }
             }
         });
-        this.register("bobView", "options.video", GameOptions.Option.VIEW_BOBBING);
-        this.register(new CyclingOptionStandardSetting("guiScale", "options.video", this.options, GameOptions.Option.GUI_SCALE, options -> options.guiScale) {
+        this.register("bobView", "options.video", GameOption.VIEW_BOBBING);
+        this.register(new CyclingOptionStandardSetting("guiScale", "options.video", this.options, GameOption.GUI_SCALE, options -> options.guiScale) {
             @Override
             public void set(GameOptions options, Integer value) {
                 options.guiScale = Math.max(0, value);
             }
         });
-        this.register(new FloatOptionStandardSetting("gamma", "options.video", this.options, GameOptions.Option.BRIGHTNESS) {
+        this.register("advancedOpengl", "options.video", GameOption.ADVANCED_OPENGL);
+        this.register(new FloatOptionStandardSetting("gamma", "options.video", this.options, GameOption.GAMMA) {
             @Override
             public void set(GameOptions options, Float value) {
                 options.gamma = Math.max(0.0f, Math.min(5.0f, value));
@@ -103,7 +102,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
 
             @Override
             public @NotNull ButtonWidget createMainWidget() {
-                StandardOptionSliderWidget widget = new StandardOptionSliderWidget(this.option.getOrdinal(), 0, 0, this.option, this, this.options) {
+                StandardOptionSliderWidget widget = new StandardOptionSliderWidget(this.option.method_882(), 0, 0, this.option, this, this.options) {
                     @Override
                     protected void mouseDragged(MinecraftClient client, int mouseX, int mouseY) {
                         super.mouseDragged(client, mouseX, mouseY);
@@ -135,19 +134,20 @@ public class StandardSettingsConfig implements SpeedrunConfig {
                 return "+" + (int) (value * 100.0f) + "%";
             }
         });
-        this.register("renderClouds", "options.video", GameOptions.Option.SHOW_CLOUDS, options -> options.cloudMode);
-        this.register("particles", "options.video", GameOptions.Option.PARTICLES, options -> options.particle);
-        this.register("fullscreen", "options.video", GameOptions.Option.USE_FULLSCREEN);
-        this.register("enableVsync", "options.video", GameOptions.Option.ENABLE_VSYNC);
-        this.register("mipmapLevels", "options.video", GameOptions.Option.MIPMAP_LEVELS);
-        this.register("allowBlockAlternatives", "options.video", GameOptions.Option.BLOCK_ALTERNATIVES);
-        this.register("useVbo", "options.video", GameOptions.Option.USE_VBO);
-        this.register("entityShadows", "options.video", GameOptions.Option.ENTITY_SHADOWS);
-
-        // Skin Customizations
-        for (PlayerModelPart playerModelPart : PlayerModelPart.values()) {
-            this.register(new PlayerModelPartStandardSetting("modelPart_" + playerModelPart.getName(), "options.skinCustomisation", this.options, playerModelPart));
-        }
+        this.register("renderClouds", "options.video", GameOption.RENDER_CLOUDS);
+        this.register("particles", "options.video", GameOption.PARTICLES, options -> options.particle);
+        this.register("fullscreen", "options.video", GameOption.USE_FULLSCREEN);
+        this.register("enableVsync", "options.video", GameOption.ENABLE_VSYNC);
+        this.register("mipmapLevels", "options.video", GameOption.MIPMAP_LEVELS);
+        this.register(new BooleanOptionStandardSetting("anisotropicFiltering", "options.video", this.options, GameOption.ANISOTROPIC_FILTERING) {
+            @Override
+            protected void set(GameOptions options, Boolean value) {
+                if (value != this.get()) {
+                    super.set(options, value);
+                    StandardSettings.anisotropicFilteringUpdated = true;
+                }
+            }
+        });
 
         // Music & Sounds
         for (SoundCategory soundCategory : SoundCategory.values()) {
@@ -163,59 +163,50 @@ public class StandardSettingsConfig implements SpeedrunConfig {
             }
             return language.toString();
         }, option -> new CallbackButtonWidget(120, 20, option.getText(), button -> MinecraftClient.getInstance().setScreen(new LanguageOptionsScreen(MinecraftClient.getInstance().currentScreen, this.options, MinecraftClient.getInstance().getLanguageManager()))));
-        this.register("forceUnicodeFont", "options.language", GameOptions.Option.FORCE_UNICODE);
+        this.register("forceUnicodeFont", "options.language", GameOption.FORCE_UNICODE_FONT);
 
         // Controls
-        this.register("mouseSensitivity", "options.controls", GameOptions.Option.SENSITIVITY);
-        this.register("invertYMouse", "options.controls", GameOptions.Option.INVERT_MOUSE);
-        this.register("touchscreen", "options.controls", GameOptions.Option.TOUCHSCREEN);
+        this.register("mouseSensitivity", "options.controls", GameOption.SENSITIVITY);
+        this.register("invertYMouse", "options.controls", GameOption.INVERT_MOUSE);
+        this.register("touchscreen", "options.controls", GameOption.TOUCHSCREEN);
         KeyBinding[] keyBindings = ArrayUtils.clone(MinecraftClient.getInstance().options.allKeys);
         Arrays.sort(keyBindings);
         for (KeyBinding keyBinding : keyBindings) {
             this.register(new KeyBindingStandardSetting("key_" + keyBinding.getTranslationKey(), keyBinding.getCategory(), keyBinding));
         }
 
+        // Multiplayer Settings
+        this.register("showCape", "options.multiplayer.title", GameOption.SHOW_CAPE);
+
         // Chat Settings
-        this.register("chatVisibility", "options.chat.title", GameOptions.Option.CHAT_VISIBILITY, options -> options.chatVisibilityType.getId());
-        this.register("chatColors", "options.chat.title", GameOptions.Option.CHAT_COLOR);
-        this.register("chatLinks", "options.chat.title", GameOptions.Option.CHAT_LINKS);
-        this.register("chatOpacity", "options.chat.title", GameOptions.Option.CHAT_OPACITY);
-        this.register("chatLinksPrompt", "options.chat.title", GameOptions.Option.CHAT_LINKS_PROMPT);
-        this.register("chatScale", "options.chat.title", GameOptions.Option.CHAT_SCALE);
-        this.register("chatHeightFocused", "options.chat.title", GameOptions.Option.CHAT_HEIGHT_FOCUSED);
-        this.register("chatHeightUnfocused", "options.chat.title", GameOptions.Option.SATURATION);
-        this.register("chatWidth", "options.chat.title", GameOptions.Option.CHAT_WIDTH);
-        this.register("reducedDebugInfo", "options.chat.title", GameOptions.Option.REDUCED_DEBUG_INFO);
+        this.register("chatVisibility", "options.chat.title", GameOption.CHAT_VISIBILITY, options -> options.field_7671.getId());
+        this.register("chatColors", "options.chat.title", GameOption.CHAT_COLOR);
+        this.register("chatLinks", "options.chat.title", GameOption.CHAT_LINKS);
+        this.register("chatOpacity", "options.chat.title", GameOption.CHAT_OPACITY);
+        this.register("chatLinksPrompt", "options.chat.title", GameOption.CHAT_LINKS_PROMPT);
+        this.register("chatScale", "options.chat.title", GameOption.CHAT_SCALE);
+        this.register("chatHeightFocused", "options.chat.title", GameOption.CHAT_HEIGHT_FOCUSED);
+        this.register("chatHeightUnfocused", "options.chat.title", GameOption.SATURATION);
+        this.register("chatWidth", "options.chat.title", GameOption.CHAT_WIDTH);
 
         // Snooper Settings
-        this.register("snooperEnabled", "options.snooper.view", GameOptions.Option.SNOOPER_ENABLED);
+        this.register("snooperEnabled", "options.snooper.view", GameOption.SNOOPER_ENABLED);
 
         // F3 Settings
         this.registerBoolean("pauseOnLostFocus", "f3", options -> options.pauseOnLostFocus, (options, value) -> options.pauseOnLostFocus = value);
         this.registerBoolean("hitboxes", "f3", StandardGameOptions::getHitBoxes, StandardGameOptions::setHitBoxes).disable();
         this.register("pieDirectory", "f3", StandardGameOptions::getPieDirectory, StandardGameOptions::setPieDirectory, StandardSetting::get, option -> {
-            TextFieldWidget widget = new TextFieldWidget(-1, MinecraftClient.getInstance().textRenderer, 0, 0, 120, 20);
+            TextFieldWidget widget = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, 120, 20) {
+                @Override
+                public boolean keyPressed(char character, int code) {
+                    boolean bl = super.keyPressed(character, code);
+                    option.set(this.getText());
+                    this.setText(option.get());
+                    return bl;
+                }
+            };
             widget.setMaxLength(128);
-            widget.setTextPredicate(string -> string != null && (string.startsWith("root") || string.isEmpty()));
             widget.setText(option.get());
-            widget.setListener(new PagedEntryListWidget.Listener() {
-                @Override
-                public void setBooleanValue(int id, boolean value) {
-                }
-
-                @Override
-                public void setFloatValue(int id, float value) {
-                }
-
-                @Override
-                public void setStringValue(int id, String text) {
-                    if (text.isEmpty()) {
-                        widget.setText("root");
-                        return;
-                    }
-                    option.set(text);
-                }
-            });
             return widget;
         }).disable();
 
@@ -224,9 +215,9 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.registerBoolean("f1", "more", options -> options.hudHidden, (options, value) -> options.hudHidden = value);
 
         // OnWorldJoin Settings
-        this.onWorldJoin(new FloatOptionStandardSetting("fovOnWorldJoin", "onWorldJoin", this.optionsOnWorldJoin, GameOptions.Option.FIELD_OF_VIEW)).disable();
-        this.onWorldJoin(new FloatOptionStandardSetting("renderDistanceOnWorldJoin", "onWorldJoin", this.optionsOnWorldJoin, GameOptions.Option.RENDER_DISTANCE)).disable();
-        this.onWorldJoin(new CyclingOptionStandardSetting("guiScaleOnWorldJoin", "onWorldJoin", this.optionsOnWorldJoin, GameOptions.Option.GUI_SCALE, options -> options.guiScale) {
+        this.onWorldJoin(new FloatOptionStandardSetting("fovOnWorldJoin", "onWorldJoin", this.optionsOnWorldJoin, GameOption.FOV)).disable();
+        this.onWorldJoin(new FloatOptionStandardSetting("renderDistanceOnWorldJoin", "onWorldJoin", this.optionsOnWorldJoin, GameOption.RENDER_DISTANCE)).disable();
+        this.onWorldJoin(new CyclingOptionStandardSetting("guiScaleOnWorldJoin", "onWorldJoin", this.optionsOnWorldJoin, GameOption.GUI_SCALE, options -> options.guiScale) {
             @Override
             public void set(GameOptions options, Integer value) {
                 options.guiScale = Math.max(0, value);
@@ -234,14 +225,14 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         }).disable();
     }
 
-    private StandardSetting<?> register(String id, String category, GameOptions.Option option) {
-        if (option.isNumeric()) {
+    private StandardSetting<?> register(String id, String category, GameOption option) {
+        if (option.method_879()) {
             return this.register(new FloatOptionStandardSetting(id, category, this.options, option));
         }
         return this.register(new BooleanOptionStandardSetting(id, category, this.options, option));
     }
 
-    private CyclingOptionStandardSetting register(String id, String category, GameOptions.Option option, ToIntFunction<GameOptions> optionGetter) {
+    private CyclingOptionStandardSetting register(String id, String category, GameOption option, ToIntFunction<GameOptions> optionGetter) {
         return this.register(new CyclingOptionStandardSetting(id, category, this.options, option, optionGetter));
     }
 
