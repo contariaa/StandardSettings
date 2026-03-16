@@ -193,7 +193,8 @@ public class StandardSettingsConfig implements SpeedrunConfig {
                     }
                     double value;
                     try {
-                        value = Double.parseDouble(string);
+                        // read only up to float precision, matching the behavior of GameOptions#load
+                        value = Float.parseFloat(string);
                     } catch (NumberFormatException e) {
                         return;
                     }
