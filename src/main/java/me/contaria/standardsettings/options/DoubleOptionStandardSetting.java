@@ -6,7 +6,6 @@ import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.StandardGameOptions;
 import me.contaria.standardsettings.mixin.accessors.DoubleOptionAccessor;
 import me.contaria.standardsettings.mixin.accessors.OptionAccessor;
-import net.minecraft.client.gui.widget.AbstractButtonWidget;
 import net.minecraft.client.gui.widget.DoubleOptionSliderWidget;
 import net.minecraft.client.options.DoubleOption;
 import net.minecraft.client.options.GameOptions;
@@ -21,7 +20,12 @@ public class DoubleOptionStandardSetting extends StandardSetting<Double> {
         super(id, category, options);
         this.option = option;
 
-        this.set(this.getOption());
+        // may have double precision if set in-game instead of read from options.txt, no need to preserve this because it will be lost on restart
+        this.set((double) this.getOption().floatValue());
+    }
+
+    public double getRatio(double value) {
+        return this.option.getRatio(value);
     }
 
     @Override
@@ -36,7 +40,8 @@ public class DoubleOptionStandardSetting extends StandardSetting<Double> {
 
     @Override
     protected void valueFromJson(JsonElement jsonElement) {
-        this.set(jsonElement.getAsDouble());
+        // read only up to float precision, matching the behavior of GameOptions#load
+        this.set((double) jsonElement.getAsFloat());
     }
 
     @Override
@@ -55,7 +60,7 @@ public class DoubleOptionStandardSetting extends StandardSetting<Double> {
     }
 
     @Override
-    public @NotNull AbstractButtonWidget createMainWidget() {
+    public @NotNull DoubleOptionSliderWidget createMainWidget() {
         return new DoubleOptionSliderWidget(this.options, 0, 0, 120, 20, this.option) {
             @Override
             protected void updateMessage() {

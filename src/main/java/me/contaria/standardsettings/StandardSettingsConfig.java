@@ -11,6 +11,7 @@ import me.contaria.speedrunapi.config.api.SpeedrunConfigParsedMetadata;
 import me.contaria.speedrunapi.config.api.SpeedrunOption;
 import me.contaria.speedrunapi.config.api.annotations.Config;
 import me.contaria.speedrunapi.util.TextUtil;
+import me.contaria.standardsettings.gui.SliderTextFieldStandardOptionWidget;
 import me.contaria.standardsettings.options.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ConfirmScreen;
@@ -180,7 +181,28 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         this.register("forceUnicodeFont", "options.language", Option.FORCE_UNICODE_FONT);
 
         // Mouse Settings
-        this.register("mouseSensitivity", "options.mouse_settings", Option.SENSITIVITY);
+        this.register(new DoubleOptionStandardSetting("mouseSensitivity", "options.mouse_settings", this.options, Option.SENSITIVITY) {
+            @Override
+            public @NotNull AbstractButtonWidget createWidget() {
+                TextFieldWidget textField = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, 120, 20, TextUtil.empty());
+                textField.setMaxLength(128);
+                textField.setText(String.valueOf(this.get()));
+                textField.setChangedListener(string -> {
+                    if (string.isEmpty()) {
+                        return;
+                    }
+                    double value;
+                    try {
+                        // read only up to float precision, matching the behavior of GameOptions#load
+                        value = Float.parseFloat(string);
+                    } catch (NumberFormatException e) {
+                        return;
+                    }
+                    this.set(this.options, value);
+                });
+                return new SliderTextFieldStandardOptionWidget(this, this.createMainWidget(), textField);
+            }
+        });
         this.register("invertYMouse", "options.mouse_settings", Option.INVERT_MOUSE);
         this.register("mouseWheelSensitivity", "options.mouse_settings", Option.MOUSE_WHEEL_SENSITIVITY);
         this.register("discrete_mouse_scroll", "options.mouse_settings", Option.DISCRETE_MOUSE_SCROLL);
