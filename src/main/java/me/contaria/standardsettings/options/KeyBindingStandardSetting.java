@@ -2,25 +2,24 @@ package me.contaria.standardsettings.options;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import me.contaria.speedrunapi.util.TextUtil;
+import com.mojang.blaze3d.platform.InputConstants;
 import me.contaria.standardsettings.StandardSettings;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
-public class KeyBindingStandardSetting extends StandardSetting<InputUtil.Key> {
-    private final KeyBinding keyBinding;
-    private InputUtil.Key value;
+public class KeyBindingStandardSetting extends StandardSetting<InputConstants.Key> {
+    private final KeyMapping keyBinding;
+    private InputConstants.Key value;
 
-    public KeyBindingStandardSetting(String id, @Nullable String category, KeyBinding keyBinding) {
+    public KeyBindingStandardSetting(String id, @Nullable String category, KeyMapping keyBinding) {
         super(id, category);
         this.keyBinding = keyBinding;
 
@@ -28,50 +27,50 @@ public class KeyBindingStandardSetting extends StandardSetting<InputUtil.Key> {
     }
 
     @Override
-    public InputUtil.Key get() {
+    public InputConstants.Key get() {
         return this.value;
     }
 
     @Override
-    public void set(InputUtil.Key value) {
+    public void set(InputConstants.Key value) {
         this.value = value;
     }
 
     @Override
-    public InputUtil.Key getVanilla() {
-        return InputUtil.fromTranslationKey(this.keyBinding.getBoundKeyTranslationKey());
+    public InputConstants.Key getVanilla() {
+        return InputConstants.getKey(this.keyBinding.saveString());
     }
 
     @Override
-    public void setVanilla(InputUtil.Key value) {
-        this.keyBinding.setBoundKey(value);
+    public void setVanilla(InputConstants.Key value) {
+        this.keyBinding.setKey(value);
     }
 
     @Override
     protected void valueFromJson(JsonElement jsonElement) {
-        this.set(InputUtil.fromTranslationKey(jsonElement.getAsString()));
+        this.set(InputConstants.getKey(jsonElement.getAsString()));
     }
 
     @Override
     protected JsonElement valueToJson() {
-        return new JsonPrimitive(this.get().getTranslationKey());
+        return new JsonPrimitive(this.get().getName());
     }
 
     @Override
-    public @NotNull Text getName() {
-        return TextUtil.translatable(this.keyBinding.getTranslationKey());
+    public @NotNull Component getName() {
+        return Component.translatable(this.keyBinding.getName());
     }
 
     @Override
-    public @NotNull Text getDisplayText() {
-        Text text = this.value.getLocalizedText();
+    public @NotNull Component getDisplayText() {
+        Component text = this.value.getDisplayName();
         if (StandardSettings.config.isFocusedKeyBinding(this)) {
-            return TextUtil.literal("> ").append(text.copy().formatted(Formatting.WHITE, Formatting.UNDERLINE)).append(" <").formatted(Formatting.YELLOW);
+            return Component.literal("> ").append(text.copy().withStyle(ChatFormatting.WHITE, ChatFormatting.UNDERLINE)).append(" <").withStyle(ChatFormatting.YELLOW);
         }
-        if (this.value != InputUtil.UNKNOWN_KEY) {
+        if (this.value != InputConstants.UNKNOWN) {
             for (StandardSetting<?> setting : StandardSettings.config.standardSettings) {
                 if (setting != this && setting instanceof KeyBindingStandardSetting && setting.isEnabled() && this.value.equals(((KeyBindingStandardSetting) setting).value)) {
-                    return TextUtil.literal("[ ").append(text.copy().formatted(Formatting.WHITE)).append(" ]").formatted(Formatting.RED);
+                    return Component.literal("[ ").append(text.copy().withStyle(ChatFormatting.WHITE)).append(" ]").withStyle(ChatFormatting.YELLOW);
                 }
             }
         }
@@ -79,12 +78,12 @@ public class KeyBindingStandardSetting extends StandardSetting<InputUtil.Key> {
     }
 
     @Override
-    public @NotNull ClickableWidget createMainWidget() {
-        return new ButtonWidget(0, 0, 120, 20, this.getText(), button -> StandardSettings.config.setFocusedKeyBinding(this), Supplier::get) {
+    public @NotNull AbstractWidget createMainWidget() {
+        return new Button.Plain(0, 0, 120, 20, this.getText(), button -> StandardSettings.config.setFocusedKeyBinding(this), Supplier::get) {
             @Override
-            public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+            protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
                 this.setMessage(KeyBindingStandardSetting.this.getText());
-                super.renderWidget(context, mouseX, mouseY, delta);
+                super.extractContents(graphics, mouseX, mouseY, a);
             }
         };
     }

@@ -1,24 +1,24 @@
 package me.contaria.standardsettings.mixin.accessors;
 
-import net.minecraft.client.option.SimpleOption;
-import net.minecraft.text.Text;
+import net.minecraft.client.OptionInstance;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.function.Function;
 
-@Mixin(SimpleOption.class)
+@Mixin(OptionInstance.class)
 public interface SimpleOptionAccessor<T> {
-    @Accessor("textGetter")
-    Function<T, Text> standardsettings$getTextGetter();
+    @Accessor("toString")
+    Function<T, Component> standardsettings$getTextGetter();
 
     @Mutable
-    @Accessor("textGetter")
-    void standardsettings$setTextGetter(Function<T, Text> textGetter);
+    @Accessor("toString")
+    void standardsettings$setTextGetter(Function<T, Component> textGetter);
 
-    @Accessor("text")
-    Text standardsettings$getText();
+    @Accessor("caption")
+    Component standardsettings$getText();
 
     @Accessor("value")
     void standardsettings$setValue(T value);

@@ -1,14 +1,14 @@
 package me.contaria.standardsettings;
 
-import me.contaria.standardsettings.mixin.accessors.BakedModelManagerAccessor;
+import com.mojang.blaze3d.platform.Window;
 import me.contaria.standardsettings.options.StandardSetting;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.render.model.BakedModelManager;
-import net.minecraft.client.resource.language.LanguageManager;
-import net.minecraft.client.util.Window;
-import net.minecraft.resource.SimpleResourceReload;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
+import net.minecraft.client.TextureFilteringMethod;
+import net.minecraft.client.resources.language.LanguageManager;
+import net.minecraft.server.packs.resources.SimpleReloadInstance;
 import net.minecraft.util.Unit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,8 +33,13 @@ public class StandardSettings {
     public static boolean onWorldJoinPending;
     public static boolean autoF3EscPending;
 
+    private static int oldMipmaps;
+    private static int oldAnisotropyBit;
+    private static TextureFilteringMethod oldTextureFiltering;
+
     public static void reset() {
         config.update();
+        cacheMipMap();
         for (StandardSetting<?> setting : config.standardSettings) {
             setting.resetOption();
         }
@@ -52,40 +57,40 @@ public class StandardSettings {
     }
 
     public static void updateSettings() {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         Window window = client.getWindow();
 
-        window.applyFullscreenVideoMode();
+        window.changeFullscreenVideoMode();
 
-        if (window.getScaleFactor() != client.options.getGuiScale().getValue()) {
-            client.onResolutionChanged();
+        if (window.getGuiScale() != client.options.guiScale().get()) {
+            client.resizeGui();
         }
 
         LanguageManager languageManager = client.getLanguageManager();
-        if (!languageManager.getLanguage().equals(client.options.language)) {
-            if (languageManager.getLanguage(client.options.language) == null) {
-                client.options.language = "en_us";
+        if (!languageManager.getSelected().equals(client.options.languageCode)) {
+            if (languageManager.getLanguage(client.options.languageCode) == null) {
+                client.options.languageCode = "en_us";
             }
-            languageManager.setLanguage(client.options.language);
-            languageManager.reload(client.getResourceManager());
+            languageManager.setSelected(client.options.languageCode);
+            languageManager.onResourceManagerReload(client.getResourceManager());
         }
 
-        BakedModelManager bakedModelManager = client.getBakedModelManager();
-        if (((BakedModelManagerAccessor) bakedModelManager).standardsettings$getMipmapLevels() != client.options.getMipmapLevels().getValue()) {
-            client.setMipmapLevels(client.options.getMipmapLevels().getValue());
-            SimpleResourceReload.start(
+        if (compareMipMap()) {
+            client.updateMaxMipLevel(client.options.mipmapLevels().get());
+            SimpleReloadInstance.create(
                     client.getResourceManager(),
-                    List.of(client.getBakedModelManager()),
+                    List.of(client.getAtlasManager(), client.getModelManager()),
                     Runnable::run,
                     Runnable::run,
                     CompletableFuture.completedFuture(Unit.INSTANCE),
                     false
-            ).whenComplete().join();
+            ).done().join();
         }
 
-        KeyBinding.updateKeysByCode();
+        KeyMapping.resetMapping();
 
-        client.options.write();
+        client.options.save();
+        client.debugEntries.save();
     }
 
     public static void createCache() {
@@ -117,7 +122,7 @@ public class StandardSettings {
             options.add(setting.getID() + ":" + setting.get());
         }
         try {
-            Files.write(MinecraftClient.getInstance().getLevelStorage().getSavesDirectory().resolve(worldName).resolve("standardoptions.txt"), options, StandardCharsets.UTF_8);
+            Files.write(Minecraft.getInstance().getLevelSource().getBaseDir().resolve(worldName).resolve("standardoptions.txt"), options, StandardCharsets.UTF_8);
             LOGGER.info("Saved standardoptions to world file.");
         } catch (IOException e) {
             LOGGER.warn("Failed to save standardoptions to world file.", e);
@@ -126,5 +131,19 @@ public class StandardSettings {
 
     public static boolean isEnabled() {
         return config.toggleStandardSettings;
+    }
+
+    private static void cacheMipMap() {
+        Options options = Minecraft.getInstance().options;
+        oldMipmaps = options.mipmapLevels().get();
+        oldAnisotropyBit = options.maxAnisotropyBit().get();
+        oldTextureFiltering = options.textureFiltering().get();
+    }
+
+    private static boolean compareMipMap() {
+        Options options = Minecraft.getInstance().options;
+        return options.mipmapLevels().get() != oldMipmaps
+                || options.maxAnisotropyBit().get() != oldAnisotropyBit
+                || options.textureFiltering().get() != oldTextureFiltering;
     }
 }

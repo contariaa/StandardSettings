@@ -4,10 +4,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import me.contaria.speedrunapi.config.api.SpeedrunOption;
-import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.gui.StandardOptionWidget;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,26 +65,26 @@ public abstract class StandardSetting<T> implements SpeedrunOption<T> {
     }
 
     @Override
-    public final @NotNull ClickableWidget createWidget() {
+    public final @NotNull AbstractWidget createWidget() {
         return new StandardOptionWidget(this, this.createMainWidget());
     }
 
-    public abstract @NotNull ClickableWidget createMainWidget();
+    public abstract @NotNull AbstractWidget createMainWidget();
 
     @Override
-    public @Nullable Text getDescription() {
+    public @Nullable Component getDescription() {
         return null;
     }
 
     @Override
-    public final @NotNull Text getText() {
+    public final @NotNull Component getText() {
         if (!this.isEnabled()) {
-            return TextUtil.literal("-");
+            return Component.literal("-");
         }
         return this.getDisplayText();
     }
 
-    protected abstract @NotNull Text getDisplayText();
+    protected abstract @NotNull Component getDisplayText();
 
     @Override
     public final void fromJson(JsonElement jsonElement) {

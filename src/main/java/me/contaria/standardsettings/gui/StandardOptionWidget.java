@@ -1,59 +1,59 @@
 package me.contaria.standardsettings.gui;
 
 import me.contaria.standardsettings.options.StandardSetting;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.ParentElement;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.screen.ScreenTexts;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.events.ContainerEventHandler;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.CommonComponents;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class StandardOptionWidget extends ClickableWidget implements ParentElement {
+public class StandardOptionWidget extends AbstractWidget implements ContainerEventHandler {
     private final StandardSetting<?> setting;
-    private final ClickableWidget mainWidget;
-    private final ClickableWidget toggle;
-    private Element focused;
+    private final AbstractWidget mainWidget;
+    private final AbstractWidget toggle;
+    private GuiEventListener focused;
     private boolean isDragging;
 
-    public StandardOptionWidget(StandardSetting<?> setting, ClickableWidget mainWidget) {
+    public StandardOptionWidget(StandardSetting<?> setting, AbstractWidget mainWidget) {
         super(mainWidget.getX(), mainWidget.getY(), mainWidget.getWidth() + 30, mainWidget.getHeight(), mainWidget.getMessage());
 
         this.setting = setting;
         this.mainWidget = mainWidget;
-        this.toggle = ButtonWidget.builder(ScreenTexts.onOrOff(setting.isEnabled()), button -> {
+        this.toggle = Button.builder(CommonComponents.optionStatus(setting.isEnabled()), button -> {
             boolean enabled = this.setting.toggleEnabled();
-            button.setMessage(ScreenTexts.onOrOff(enabled));
+            button.setMessage(CommonComponents.optionStatus(enabled));
             this.setEnabled(enabled);
-        }).dimensions(mainWidget.getWidth() + 5, 0, 25, 20).build();
+        }).bounds(mainWidget.getWidth() + 5, 0, 25, 20).build();
         this.setEnabled(setting.isEnabled());
     }
 
     private void setEnabled(boolean enabled) {
         this.mainWidget.active = enabled;
-        if (this.mainWidget instanceof TextFieldWidget) {
-            ((TextFieldWidget) this.mainWidget).setEditable(enabled);
-            ((TextFieldWidget) this.mainWidget).setFocusUnlocked(enabled);
+        if (this.mainWidget instanceof EditBox) {
+            ((EditBox) this.mainWidget).setEditable(enabled);
         }
         this.mainWidget.setMessage(this.setting.getText());
     }
 
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         this.mainWidget.setPosition(this.getX(), this.getY());
-        this.mainWidget.render(context, mouseX, mouseY, delta);
+        this.mainWidget.extractRenderState(graphics, mouseX, mouseY, a);
         this.toggle.setPosition(this.getX() + this.mainWidget.getWidth() + 5, this.getY());
-        this.toggle.render(context, mouseX, mouseY, delta);
+        this.toggle.extractRenderState(graphics, mouseX, mouseY, a);
     }
 
     @Override
-    public List<? extends Element> children() {
-        List<Element> children = new ArrayList<>();
+    public List<? extends GuiEventListener> children() {
+        List<GuiEventListener> children = new ArrayList<>();
         children.add(this.mainWidget);
         children.add(this.toggle);
         return children;
@@ -71,31 +71,39 @@ public class StandardOptionWidget extends ClickableWidget implements ParentEleme
 
     @Nullable
     @Override
-    public Element getFocused() {
+    public GuiEventListener getFocused() {
         return this.focused;
     }
 
     @Override
-    public void setFocused(@Nullable Element focused) {
+    public void setFocused(@Nullable GuiEventListener focused) {
+        if (this.focused != null) {
+            this.focused.setFocused(false);
+        }
+
+        if (focused != null) {
+            focused.setFocused(true);
+        }
+
         this.focused = focused;
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        return ParentElement.super.mouseClicked(mouseX, mouseY, button);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        return ContainerEventHandler.super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        return ParentElement.super.mouseReleased(mouseX, mouseY, button);
+    public boolean mouseReleased(MouseButtonEvent event) {
+        return ContainerEventHandler.super.mouseReleased(event);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        return ParentElement.super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+        return ContainerEventHandler.super.mouseDragged(event, dx, dy);
     }
 
     @Override
-    public void appendClickableNarrations(NarrationMessageBuilder builder) {
+    protected void updateWidgetNarration(NarrationElementOutput output) {
     }
 }

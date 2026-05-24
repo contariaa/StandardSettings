@@ -1,10 +1,10 @@
 package me.contaria.standardsettings.interfaces;
 
-import net.minecraft.client.option.SimpleOption;
+import net.minecraft.client.OptionInstance;
 
 public interface StandardSettingsSimpleOption<T> {
 
-    SimpleOption<T> standardsettings$copy();
+    OptionInstance<T> standardsettings$copy();
 
-    SimpleOption<T> standardsettings$copy(SimpleOption.Callbacks<T> callbacks);
+    OptionInstance<T> standardsettings$copy(OptionInstance.ValueSet<T> callbacks);
 }
