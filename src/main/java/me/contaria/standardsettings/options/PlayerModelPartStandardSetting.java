@@ -2,12 +2,12 @@ package me.contaria.standardsettings.options;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.entity.player.PlayerModelPart;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.PlayerModelPart;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,12 +34,12 @@ public class PlayerModelPartStandardSetting extends StandardSetting<Boolean> {
 
     @Override
     public Boolean getVanilla() {
-        return MinecraftClient.getInstance().options.isPlayerModelPartEnabled(this.playerModelPart);
+        return Minecraft.getInstance().options.isModelPartEnabled(this.playerModelPart);
     }
 
     @Override
     public void setVanilla(Boolean value) {
-        MinecraftClient.getInstance().options.setPlayerModelPart(this.playerModelPart, value);
+        Minecraft.getInstance().options.setModelPart(this.playerModelPart, value);
     }
 
     @Override
@@ -53,20 +53,20 @@ public class PlayerModelPartStandardSetting extends StandardSetting<Boolean> {
     }
 
     @Override
-    public @NotNull Text getName() {
-        return this.playerModelPart.getOptionName();
+    public @NotNull Component getName() {
+        return this.playerModelPart.getName();
     }
 
     @Override
-    public @NotNull Text getDisplayText() {
-        return ScreenTexts.onOrOff(this.get());
+    public @NotNull Component getDisplayText() {
+        return CommonComponents.optionStatus(this.get());
     }
 
     @Override
-    public @NotNull ClickableWidget createMainWidget() {
-        return ButtonWidget.builder(this.getText(), button -> {
+    public @NotNull AbstractWidget createMainWidget() {
+        return Button.builder(this.getText(), button -> {
             this.set(!this.get());
             button.setMessage(this.getText());
-        }).dimensions(0, 0, 120, 20).build();
+        }).bounds(0, 0, 120, 20).build();
     }
 }

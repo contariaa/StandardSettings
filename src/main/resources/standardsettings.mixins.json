@@ -3,15 +3,18 @@
   "package": "me.contaria.standardsettings.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "MinecraftClientMixin",
-    "SimpleOptionMixin",
-    "accessors.BakedModelManagerAccessor",
+    "LevelLoadingScreenMixin",
+    "MinecraftMixin",
+    "OptionInstanceMixin",
+    "WindowMixin",
     "accessors.CyclingButtonWidgetAccessor",
+    "accessors.OptionListAccessor",
     "accessors.PieChartAccessor",
     "accessors.SimpleOptionAccessor",
-    "fix.KeyboardMixin",
-    "fix.LanguageOptionsScreenMixin",
-    "fix.LanguageSelectionListWidgetMixin"
+    "fix.KeyboardHandlerMixin",
+    "fix.LanguageSelectionListMixin",
+    "fix.LanguageSelectScreenMixin",
+    "fix.ModelManagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

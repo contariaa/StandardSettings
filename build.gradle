@@ -1,10 +1,12 @@
 plugins {
-	id 'fabric-loom' version '1.9-SNAPSHOT'
+	id 'net.fabricmc.fabric-loom' version '1.16-SNAPSHOT'
 	id 'maven-publish'
 }
 
-sourceCompatibility = JavaVersion.VERSION_21
-targetCompatibility = JavaVersion.VERSION_21
+java {
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
 
 version = project.mod_version + "+" + project.target_version
 group = project.maven_group
@@ -25,15 +27,14 @@ repositories {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// SpeedrunAPI
 	// check for the latest versions at https://jitpack.io/#contariaa/speedrunapi
-	modImplementation "com.github.contariaa:SpeedrunAPI:50e3af870f"
+	implementation "com.github.contariaa:SpeedrunAPI:14479d2bb2"
 
 	// check for the latest versions at https://modrinth.com/mod/sodium/versions
-	modCompileOnly "maven.modrinth:sodium:mc1.21.4-0.6.13-fabric"
+	compileOnly "maven.modrinth:sodium:mc26.1-0.8.7-fabric"
 }
 
 loom {

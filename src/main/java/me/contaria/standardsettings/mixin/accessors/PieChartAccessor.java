@@ -1,14 +1,14 @@
 package me.contaria.standardsettings.mixin.accessors;
 
-import net.minecraft.client.gui.hud.debug.PieChart;
+import net.minecraft.client.gui.components.debugchart.ProfilerPieChart;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(PieChart.class)
+@Mixin(ProfilerPieChart.class)
 public interface PieChartAccessor {
-    @Accessor("currentPath")
+    @Accessor("profilerTreePath")
     String standardsettings$getCurrentPath();
 
-    @Accessor("currentPath")
+    @Accessor("profilerTreePath")
     void standardsettings$setCurrentPath(String currentPath);
 }

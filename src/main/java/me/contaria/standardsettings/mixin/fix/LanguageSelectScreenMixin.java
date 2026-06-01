@@ -4,37 +4,37 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import me.contaria.standardsettings.gui.StandardSettingsLanguageScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.option.GameOptionsScreen;
-import net.minecraft.client.gui.screen.option.LanguageOptionsScreen;
-import net.minecraft.client.gui.widget.DirectionalLayoutWidget;
-import net.minecraft.client.gui.widget.Widget;
-import net.minecraft.client.option.GameOptions;
-import net.minecraft.text.Text;
+import net.minecraft.client.Options;
+import net.minecraft.client.gui.layouts.LayoutElement;
+import net.minecraft.client.gui.layouts.LinearLayout;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.options.LanguageSelectScreen;
+import net.minecraft.client.gui.screens.options.OptionsSubScreen;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Slice;
 
-@Mixin(LanguageOptionsScreen.class)
-public abstract class LanguageOptionsScreenMixin extends GameOptionsScreen {
+@Mixin(LanguageSelectScreen.class)
+public abstract class LanguageSelectScreenMixin extends OptionsSubScreen {
 
-    public LanguageOptionsScreenMixin(Screen parent, GameOptions options, Text title) {
+    public LanguageSelectScreenMixin(Screen parent, Options options, Component title) {
         super(parent, options, title);
     }
 
     @WrapWithCondition(
-            method = "initFooter",
+            method = "addFooter",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/widget/DirectionalLayoutWidget;add(Lnet/minecraft/client/gui/widget/Widget;)Lnet/minecraft/client/gui/widget/Widget;",
+                    target = "Lnet/minecraft/client/gui/layouts/LinearLayout;addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;",
                     ordinal = 0
             ),
             slice = @Slice(
                     from = @At(value = "CONSTANT", args = "stringValue=options.font")
             )
     )
-    private boolean doNotAddFontOptionsButton(DirectionalLayoutWidget layout, Widget widget) {
+    private boolean doNotAddFontOptionsButton(LinearLayout layout, LayoutElement widget) {
         return !this.isStandardSettings();
     }
 

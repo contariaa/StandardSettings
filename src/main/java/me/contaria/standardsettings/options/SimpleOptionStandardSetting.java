@@ -2,24 +2,24 @@ package me.contaria.standardsettings.options;
 
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
-import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.interfaces.StandardSettingsSimpleOption;
 import me.contaria.standardsettings.mixin.accessors.CyclingButtonWidgetAccessor;
 import me.contaria.standardsettings.mixin.accessors.SimpleOptionAccessor;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.option.SimpleOption;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.OptionInstance;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
 public class SimpleOptionStandardSetting<T> extends StandardSetting<T> {
-    protected final SimpleOption<T> option;
-    protected final SimpleOption<T> copy;
+    protected final OptionInstance<T> option;
+    protected final OptionInstance<T> copy;
 
-    public SimpleOptionStandardSetting(String id, @Nullable String category, SimpleOption<T> option) {
+    public SimpleOptionStandardSetting(String id, @Nullable String category, OptionInstance<T> option) {
         super(id, category);
         this.option = option;
         this.copy = this.copy(option);
@@ -27,20 +27,20 @@ public class SimpleOptionStandardSetting<T> extends StandardSetting<T> {
         this.set(this.getVanilla());
     }
 
-    protected @NotNull SimpleOption<T> copy(SimpleOption<T> option) {
-        SimpleOption<T> copy = this.copySimpleOption(option);
+    protected @NotNull OptionInstance<T> copy(OptionInstance<T> option) {
+        OptionInstance<T> copy = this.copySimpleOption(option);
         //noinspection unchecked
         SimpleOptionAccessor<T> copyAccessor = (SimpleOptionAccessor<T>) (Object) copy;
 
-        Function<T, Text> textGetter = copyAccessor.standardsettings$getTextGetter();
+        Function<T, Component> textGetter = copyAccessor.standardsettings$getTextGetter();
         copyAccessor.standardsettings$setTextGetter(value -> {
-            Text name = this.getName();
-            Text text = textGetter.apply(value);
+            Component name = this.getName();
+            Component text = textGetter.apply(value);
 
             String prefix = name.getString() + ": ";
             String string = text.getString();
             if (string.startsWith(prefix)) {
-                return TextUtil.literal(string.substring(prefix.length()));
+                return Component.literal(string.substring(prefix.length()));
             }
             return text;
         });
@@ -48,7 +48,7 @@ public class SimpleOptionStandardSetting<T> extends StandardSetting<T> {
         return copy;
     }
 
-    protected @NotNull SimpleOption<T> copySimpleOption(SimpleOption<T> option) {
+    protected @NotNull OptionInstance<T> copySimpleOption(OptionInstance<T> option) {
         //noinspection unchecked
         return ((StandardSettingsSimpleOption<T>) (Object) option).standardsettings$copy();
     }
@@ -73,39 +73,39 @@ public class SimpleOptionStandardSetting<T> extends StandardSetting<T> {
         this.set(this.option, value);
     }
 
-    protected T get(SimpleOption<T> option) {
-        return option.getValue();
+    protected T get(OptionInstance<T> option) {
+        return option.get();
     }
 
-    protected void set(SimpleOption<T> option, T value) {
-        option.setValue(value);
+    protected void set(OptionInstance<T> option, T value) {
+        option.set(value);
     }
 
     @Override
     protected void valueFromJson(JsonElement jsonElement) {
-        this.copy.getCodec().parse(JsonOps.INSTANCE, jsonElement).result().ifPresent(this.copy::setValue);
+        this.copy.codec().parse(JsonOps.INSTANCE, jsonElement).result().ifPresent(this.copy::set);
     }
 
     @Override
     protected JsonElement valueToJson() {
-        return this.copy.getCodec().encodeStart(JsonOps.INSTANCE, this.copy.getValue()).result().orElseThrow();
+        return this.copy.codec().encodeStart(JsonOps.INSTANCE, this.copy.get()).result().orElseThrow();
     }
 
     @Override
-    public @NotNull Text getName() {
+    public @NotNull Component getName() {
         return ((SimpleOptionAccessor<?>) (Object) this.copy).standardsettings$getText();
     }
 
     @Override
-    public @NotNull Text getDisplayText() {
+    public @NotNull Component getDisplayText() {
         return ((SimpleOptionAccessor<T>) (Object) this.copy).standardsettings$getTextGetter().apply(this.get());
     }
 
     @Override
-    public @NotNull ClickableWidget createMainWidget() {
-        ClickableWidget widget = this.copy.createWidget(MinecraftClient.getInstance().options, 0, 0, 120, this::set);
+    public @NotNull AbstractWidget createMainWidget() {
+        AbstractWidget widget = this.copy.createButton(Minecraft.getInstance().options, 0, 0, 120, this::set);
         if (widget instanceof CyclingButtonWidgetAccessor cyclingWidget) {
-            cyclingWidget.standardsettings$setOptionTextOmitted(true);
+            cyclingWidget.standardsettings$setOptionTextOmitted(CycleButton.DisplayState.VALUE);
         }
         return widget;
     }

@@ -2,40 +2,45 @@ package me.contaria.standardsettings;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.platform.Monitor;
+import com.mojang.blaze3d.platform.VideoMode;
+import com.mojang.blaze3d.platform.Window;
 import com.mojang.serialization.Codec;
 import me.contaria.speedrunapi.config.SpeedrunConfigAPI;
 import me.contaria.speedrunapi.config.SpeedrunConfigContainer;
 import me.contaria.speedrunapi.config.api.SpeedrunConfig;
 import me.contaria.speedrunapi.config.api.SpeedrunOption;
 import me.contaria.speedrunapi.config.api.annotations.Config;
-import me.contaria.speedrunapi.util.TextUtil;
 import me.contaria.standardsettings.compat.SodiumCompat;
 import me.contaria.standardsettings.gui.StandardSettingsLanguageScreen;
 import me.contaria.standardsettings.interfaces.StandardSettingsSimpleOption;
+import me.contaria.standardsettings.mixin.accessors.OptionListAccessor;
 import me.contaria.standardsettings.mixin.accessors.PieChartAccessor;
 import me.contaria.standardsettings.mixin.accessors.SimpleOptionAccessor;
 import me.contaria.standardsettings.options.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ConfirmScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.option.*;
-import net.minecraft.client.resource.language.LanguageDefinition;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.util.Monitor;
-import net.minecraft.client.util.VideoMode;
-import net.minecraft.client.util.Window;
-import net.minecraft.entity.player.PlayerModelPart;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.profiler.ProfileResult;
+import net.minecraft.client.*;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.debug.DebugScreenEntries;
+import net.minecraft.client.gui.components.debug.DebugScreenEntry;
+import net.minecraft.client.gui.screens.ConfirmScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.language.LanguageInfo;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.profiling.ProfileResults;
+import net.minecraft.world.entity.player.PlayerModelPart;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -85,105 +90,93 @@ public class StandardSettingsConfig implements SpeedrunConfig {
     {
         StandardSettings.config = this;
 
-        GameOptions options = MinecraftClient.getInstance().options;
+        Options options = Minecraft.getInstance().options;
 
-        this.register("fov", "menu.options", options.getFov());
+        this.register("fov", "menu.options", options.fov());
 
         // Online Options
-        this.register("realmsNotifications", "options.online", options.getRealmsNotifications());
-        this.register("allowServerListing", "options.online", options.getAllowServerListing());
+        this.register("realmsNotifications", "options.online", options.realmsNotifications());
+        this.register("allowServerListing", "options.online", options.allowServerListing());
 
         // Video Settings
         this.register(CustomStandardSetting.ofString(
                 "fullscreenResolution",
                 "options.video",
-                () -> MinecraftClient.getInstance().getWindow().getFullscreenVideoMode().map(VideoMode::asString).orElse(null),
-                value -> MinecraftClient.getInstance().getWindow().setFullscreenVideoMode(VideoMode.fromString(value)),
-                value -> VideoMode.fromString(value).map(mode -> TextUtil.literal(mode.toString())).orElse(TextUtil.translatable("options.fullscreen.current")),
+                () -> Minecraft.getInstance().getWindow().getPreferredFullscreenVideoMode().map(VideoMode::write).orElse(null),
+                value -> Minecraft.getInstance().getWindow().setPreferredFullscreenVideoMode(VideoMode.read(value)),
+                value -> VideoMode.read(value).map(mode -> Component.literal(mode.toString())).orElse(Component.translatable("options.fullscreen.current")),
                 setting -> {
                     // see FullScreenOption and VideoOptionsScreen#init
-                    Window window = MinecraftClient.getInstance().getWindow();
-                    Monitor monitor = window.getMonitor();
+                    Window window = Minecraft.getInstance().getWindow();
+                    Monitor monitor = window.findBestMonitor();
 
                     int index;
                     if (monitor == null) {
                         index = -1;
                     } else {
-                        index = VideoMode.fromString(setting.get()).map(monitor::findClosestVideoModeIndex).orElse(-1);
+                        index = VideoMode.read(setting.get()).map(monitor::getVideoModeIndex).orElse(-1);
                     }
 
-                    SimpleOption<Integer> simpleOption = new SimpleOption<>("options.fullscreen.resolution", SimpleOption.emptyTooltip(), (prefix, value) -> {
+                    OptionInstance<Integer> simpleOption = new OptionInstance<>("options.fullscreen.resolution", OptionInstance.noTooltip(), (prefix, value) -> {
                         if (monitor == null) {
-                            return TextUtil.translatable("options.fullscreen.unavailable");
+                            return Component.translatable("options.fullscreen.unavailable");
                         }
                         if (value == -1) {
-                            return TextUtil.translatable("options.fullscreen.current");
+                            return Component.translatable("options.fullscreen.current");
                         }
-                        return TextUtil.literal(monitor.getVideoMode(value).toString());
-                    }, new SimpleOption.ValidatingIntSliderCallbacks(-1, monitor != null ? monitor.getVideoModeCount() - 1 : -1), index, value -> {
+                        return Component.literal(monitor.getMode(value).toString());
+                    }, new OptionInstance.IntRange(-1, monitor != null ? monitor.getModeCount() - 1 : -1), index, value -> {
                         if (monitor == null) {
                             return;
                         }
                         if (value == -1) {
                             setting.set(null);
                         } else {
-                            setting.set(monitor.getVideoMode(value).asString());
+                            setting.set(monitor.getMode(value).write());
                         }
                     });
 
-                    return simpleOption.createWidget(MinecraftClient.getInstance().options, 0, 0, 120);
+                    return simpleOption.createButton(Minecraft.getInstance().options, 0, 0, 120);
                 })
         );
 
-        this.register("biomeBlendRadius", "options.video", options.getBiomeBlendRadius());
-        this.register(new SimpleOptionStandardSetting<GraphicsMode>("graphicsMode", "options.video", options.getGraphicsMode()) {
+        this.register("biomeBlendRadius", "options.video", options.biomeBlendRadius());
+        this.register("renderDistance", "options.video", options.renderDistance());
+        this.register("prioritizeChunkUpdates", "options.video", options.prioritizeChunkUpdates());
+        this.register("simulationDistance", "options.video", options.simulationDistance());
+        this.register("ao", "options.video", options.ambientOcclusion());
+        this.register("maxFps", "options.video", options.framerateLimit());
+        this.register("enableVsync", "options.video", options.enableVsync());
+        this.register("inactivityFpsLimit", "options.video", options.inactivityFpsLimit());
+        this.register(new SimpleOptionStandardSetting<>("guiScale", "options.video", options.guiScale()) {
             @Override
-            public void setVanilla(GraphicsMode value) {
-                // see Option.GRAPHICS's setter
-                if (MinecraftClient.getInstance().isRunning() && MinecraftClient.getInstance().getVideoWarningManager().hasCancelledAfterWarning() && value == GraphicsMode.FABULOUS) {
-                    StandardSettings.LOGGER.warn("Set Graphics Mode to 'Fancy' because 'Fabulous!' is not supported on this device.");
-                    super.setVanilla(GraphicsMode.FANCY);
-                } else {
-                    super.setVanilla(value);
-                }
-            }
-        });
-        this.register("renderDistance", "options.video", options.getViewDistance());
-        this.register("prioritizeChunkUpdates", "options.video", options.getChunkBuilderMode());
-        this.register("simulationDistance", "options.video", options.getSimulationDistance());
-        this.register("ao", "options.video", options.getAo());
-        this.register("maxFps", "options.video", options.getMaxFps());
-        this.register("enableVsync", "options.video", options.getEnableVsync());
-        this.register("inactivityFpsLimit", "options.video", options.getInactivityFpsLimit());
-        this.register(new SimpleOptionStandardSetting<>("guiScale", "options.video", options.getGuiScale()) {
-            @Override
-            public void set(SimpleOption<Integer> option, Integer value) {
+            public void set(OptionInstance<Integer> option, Integer value) {
                 // bypass vanillas dynamic bounds enforcing for gui scale
                 //noinspection unchecked
                 ((SimpleOptionAccessor<Integer>) (Object) option).standardsettings$setValue(Math.max(0, value));
             }
         });
-        this.register("attackIndicator", "options.video", options.getAttackIndicator());
-        this.register(new SimpleOptionStandardSetting<>("gamma", "options.video", options.getGamma()) {
+        this.register("attackIndicator", "options.video", options.attackIndicator());
+        this.register(new SimpleOptionStandardSetting<>("gamma", "options.video", options.gamma()) {
             @Override
-            protected @NotNull SimpleOption<Double> copySimpleOption(SimpleOption<Double> option) {
+            protected @NotNull OptionInstance<Double> copySimpleOption(OptionInstance<Double> option) {
                 //noinspection unchecked
                 return ((StandardSettingsSimpleOption<Double>) (Object) option).standardsettings$copy(
                         // allows brightness of up to 500% in StandardSettings
                         // Planifolia is still needed to allow the 500% to apply
-                        new SimpleOption.SliderCallbacks<>() {
+                        new OptionInstance.SliderableValueSet<>() {
                             @Override
-                            public double toSliderProgress(Double value) {
+                            public double toSliderValue(Double value) {
                                 return value / 5.0;
                             }
 
                             @Override
-                            public Double toValue(double sliderProgress) {
+                            public Double fromSliderValue(double sliderProgress) {
                                 return sliderProgress * 5.0;
                             }
 
                             @Override
-                            public Optional<Double> validate(Double value) {
+                            public Optional<Double> validateValue(Double value) {
                                 return value >= 0.0 && value <= 5.0 ? Optional.of(value) : Optional.empty();
                             }
 
@@ -198,26 +191,35 @@ public class StandardSettingsConfig implements SpeedrunConfig {
             @Override
             public void setVanilla(Double value) {
                 // limits value to 1.0 if it's invalid
-                if (this.option.getCallbacks().validate(value).isPresent()) {
+                if (this.option.values().validateValue(value).isPresent()) {
                     super.setVanilla(value);
                 } else {
                     super.setVanilla(Math.min(1.0, value));
                 }
             }
         });
-        this.register("renderClouds", "options.video", options.getCloudRenderMode());
-        this.register("fullscreen", "options.video", options.getFullscreen());
-        this.register("particles", "options.video", options.getParticles());
-        this.register("mipmapLevels", "options.video", options.getMipmapLevels());
-        this.register("entityShadows", "options.video", options.getEntityShadows());
-        this.register("screenEffectScale", "options.video", options.getDistortionEffectScale());
-        this.register("entityDistanceScaling", "options.video", options.getEntityDistanceScaling());
-        this.register("fovEffectScale", "options.video", options.getFovEffectScale());
-        this.register("showAutosaveIndicator", "options.video", options.getShowAutosaveIndicator());
-        this.register("glintSpeed", "options.video", options.getGlintSpeed());
-        this.register("glintStrength", "options.video", options.getGlintStrength());
-        this.register("menuBackgroundBlurriness", "options.video", options.getMenuBackgroundBlurriness());
-        this.register("bobView", "options.video", options.getBobView());
+        this.register("renderClouds", "options.video", options.cloudStatus());
+        this.register("cloudRange", "options.video", options.cloudRange());
+        this.register("cutoutLeaves", "options.video", options.cutoutLeaves());
+        this.register("improvedTransparency", "options.video", options.improvedTransparency());
+        this.register("textureFiltering", "options.video", options.textureFiltering());
+        this.register("maxAnisotropyBit", "options.video", options.maxAnisotropyBit());
+        this.register("weatherRadius", "options.video", options.weatherRadius());
+        this.register("fullscreen", "options.video", options.fullscreen());
+        this.register("exclusiveFullscreen", "options.video", options.exclusiveFullscreen());
+        this.register("particles", "options.video", options.particles());
+        this.register("mipmapLevels", "options.video", options.mipmapLevels());
+        this.register("entityShadows", "options.video", options.entityShadows());
+        this.register("screenEffectScale", "options.video", options.screenEffectScale());
+        this.register("entityDistanceScaling", "options.video", options.entityDistanceScaling());
+        this.register("fovEffectScale", "options.video", options.fovEffectScale());
+        this.register("showAutosaveIndicator", "options.video", options.showAutosaveIndicator());
+        this.register("vignette", "options.video", options.vignette());
+        this.register("chunkSectionFadeInTime", "options.video", options.chunkSectionFadeInTime());
+        this.register("glintSpeed", "options.video", options.glintSpeed());
+        this.register("glintStrength", "options.video", options.glintStrength());
+        this.register("menuBackgroundBlurriness", "options.video", options.menuBackgroundBlurriness());
+        this.register("bobView", "options.video", options.bobView());
         this.register("entityCulling", "options.video", () -> StandardSettings.HAS_SODIUM && SodiumCompat.getEntityCulling(), value -> {
             if (StandardSettings.HAS_SODIUM) {
                 SodiumCompat.setEntityCulling(value);
@@ -226,38 +228,38 @@ public class StandardSettingsConfig implements SpeedrunConfig {
 
         // Skin Customizations
         for (PlayerModelPart playerModelPart : PlayerModelPart.values()) {
-            this.register(new PlayerModelPartStandardSetting("modelPart_" + playerModelPart.getName(), "options.skinCustomisation", playerModelPart));
+            this.register(new PlayerModelPartStandardSetting("modelPart_" + playerModelPart.getId(), "options.skinCustomisation", playerModelPart));
         }
-        this.register("mainHand", "options.skinCustomisation", options.getMainArm());
+        this.register("mainHand", "options.skinCustomisation", options.mainHand());
 
         // Music & Sounds
-        for (SoundCategory soundCategory : SoundCategory.values()) {
-            this.register("soundCategory_" + soundCategory.getName(), "options.sounds", options.getSoundVolumeOption(soundCategory));
+        for (SoundSource soundCategory : SoundSource.values()) {
+            this.register("soundCategory_" + soundCategory.getName(), "options.sounds", options.getSoundSourceOptionInstance(soundCategory));
         }
-        this.register("showSubtitles", "options.sounds", options.getShowSubtitles());
-        this.register(new SimpleOptionStandardSetting<>("soundDevice", "options.sounds", options.getSoundDevice()) {
+        this.register("showSubtitles", "options.sounds", options.showSubtitles());
+        this.register(new SimpleOptionStandardSetting<>("soundDevice", "options.sounds", options.soundDevice()) {
             @Override
-            protected @NotNull SimpleOption<String> copySimpleOption(SimpleOption<String> option) {
+            protected @NotNull OptionInstance<String> copySimpleOption(OptionInstance<String> option) {
                 //noinspection unchecked
                 return ((StandardSettingsSimpleOption<String>) (Object) option).standardsettings$copy(
                         // sound devices are validated by checking if they are in SoundManager#getDevices
                         // to ensure this works before the sound manager is initialized, vanilla checks MinecraftClient#isRunning
                         // StandardSettings loads after running has been set to true but before the sound manager is loaded
-                        new SimpleOption.Callbacks<>() {
+                        new OptionInstance.ValueSet<>() {
                             @Override
-                            public Function<SimpleOption<String>, ClickableWidget> getWidgetCreator(SimpleOption.TooltipFactory<String> tooltipFactory, GameOptions gameOptions, int x, int y, int width, Consumer<String> changeCallback) {
-                                return option.getCallbacks().getWidgetCreator(tooltipFactory, gameOptions, x, y, width, changeCallback);
+                            public Function<OptionInstance<String>, AbstractWidget> createButton(OptionInstance.TooltipSupplier<String> tooltipFactory, Options gameOptions, int x, int y, int width, Consumer<String> changeCallback) {
+                                return option.values().createButton(tooltipFactory, gameOptions, x, y, width, changeCallback);
                             }
 
                             @Override
-                            public Optional<String> validate(String value) {
+                            public Optional<String> validateValue(String value) {
                                 // skip validating sound device
                                 return Optional.of(value);
                             }
 
                             @Override
                             public Codec<String> codec() {
-                                return option.getCodec();
+                                return option.codec();
                             }
                         }
                 );
@@ -269,107 +271,115 @@ public class StandardSettingsConfig implements SpeedrunConfig {
                 ((SimpleOptionAccessor<String>) (Object) this.copy).standardsettings$setValue(value);
             }
         });
-        this.register("directionalAudio", "options.sounds", options.getDirectionalAudio());
+        this.register("directionalAudio", "options.sounds", options.directionalAudio());
+        this.register("musicToast", "options.sounds", options.musicToast());
+        this.register("musicFrequency", "options.sounds", options.musicFrequency());
 
         // Language
         this.register(CustomStandardSetting.ofString(
                 "language", "options.language",
-                () -> options.language,
-                value -> options.language = value,
+                () -> options.languageCode,
+                value -> options.languageCode = value,
                 value -> {
-                    LanguageDefinition language = MinecraftClient.getInstance().getLanguageManager().getLanguage(value);
+                    LanguageInfo language = Minecraft.getInstance().getLanguageManager().getLanguage(value);
                     if (language != null) {
-                        return language.getDisplayText();
+                        return language.toComponent();
                     }
-                    return TextUtil.literal(value);
+                    return Component.literal(value);
                 },
-                setting -> ButtonWidget.builder(setting.getText(), button -> MinecraftClient.getInstance().setScreen(
-                        new StandardSettingsLanguageScreen(MinecraftClient.getInstance(), setting)
+                setting -> Button.builder(setting.getText(), button -> Minecraft.getInstance().setScreen(
+                        new StandardSettingsLanguageScreen(Minecraft.getInstance(), setting)
                 )).size(120, 20).build()
         ));
-        this.register("forceUnicodeFont", "options.language", options.getForceUnicodeFont());
-        this.register("japaneseGlyphVariants", "options.language", options.getJapaneseGlyphVariants());
+        this.register("forceUnicodeFont", "options.language", options.forceUnicodeFont());
+        this.register("japaneseGlyphVariants", "options.language", options.japaneseGlyphVariants());
 
         // Mouse Settings
-        this.register("mouseSensitivity", "options.mouse_settings", options.getMouseSensitivity());
-        this.register("invertYMouse", "options.mouse_settings", options.getInvertYMouse());
-        this.register("mouseWheelSensitivity", "options.mouse_settings", options.getMouseWheelSensitivity());
-        this.register("discrete_mouse_scroll", "options.mouse_settings", options.getDiscreteMouseScroll());
-        this.register("touchscreen", "options.mouse_settings", options.getTouchscreen());
-        this.register("rawMouseInput", "options.mouse_settings", options.getRawMouseInput()).setVisible(InputUtil::isRawMouseMotionSupported);
+        this.register("mouseSensitivity", "options.mouse_settings", options.sensitivity());
+        this.register("invertXMouse", "options.mouse_settings", options.invertMouseX());
+        this.register("invertYMouse", "options.mouse_settings", options.invertMouseY());
+        this.register("mouseWheelSensitivity", "options.mouse_settings", options.mouseWheelSensitivity());
+        this.register("discrete_mouse_scroll", "options.mouse_settings", options.discreteMouseScroll());
+        this.register("touchscreen", "options.mouse_settings", options.touchscreen());
+        this.register("rawMouseInput", "options.mouse_settings", options.rawMouseInput()).setVisible(InputConstants::isRawMouseInputSupported);
+        this.register("allowCursorChanges", "options.mouse_settings", options.allowCursorChanges());
 
         // Controls
-        this.register("toggleCrouch", "options.controls", options.getSneakToggled());
-        this.register("toggleSprint", "options.controls", options.getSprintToggled());
-        this.register("autoJump", "options.controls", options.getAutoJump());
-        this.register("operatorItemsTab", "options.controls", options.getOperatorItemsTab());
-        KeyBinding[] keyBindings = ArrayUtils.clone(MinecraftClient.getInstance().options.allKeys);
+        this.register("toggleCrouch", "options.controls", options.toggleCrouch());
+        this.register("toggleSprint", "options.controls", options.toggleSprint());
+        this.register("toggleAttack", "options.controls", options.toggleAttack());
+        this.register("toggleUse", "options.controls", options.toggleUse());
+        this.register("autoJump", "options.controls", options.autoJump());
+        this.register("sprintWindow", "options.controls", options.sprintWindow());
+        this.register("operatorItemsTab", "options.controls", options.operatorItemsTab());
+        KeyMapping[] keyBindings = ArrayUtils.clone(Minecraft.getInstance().options.keyMappings);
         Arrays.sort(keyBindings);
-        for (KeyBinding keyBinding : keyBindings) {
-            this.register(new KeyBindingStandardSetting("key_" + keyBinding.getTranslationKey(), keyBinding.getCategory(), keyBinding));
+        for (KeyMapping keyBinding : keyBindings) {
+            // TODO: category
+            this.register(new KeyBindingStandardSetting("key_" + keyBinding.getName(), keyBinding.getCategory().id().toLanguageKey("key.category"), keyBinding));
         }
 
         // Chat Settings
-        this.register("chatVisibility", "options.chat.title", options.getChatVisibility());
-        this.register("chatColors", "options.chat.title", options.getChatColors());
-        this.register("chatLinks", "options.chat.title", options.getChatLinks());
-        this.register("chatLinksPrompt", "options.chat.title", options.getChatLinksPrompt());
-        this.register("chatOpacity", "options.chat.title", options.getChatOpacity());
-        this.register("textBackgroundOpacity", "options.chat.title", options.getTextBackgroundOpacity());
-        this.register("chatScale", "options.chat.title", options.getChatScale());
-        this.register("chatLineSpacing", "options.chat.title", options.getChatLineSpacing());
-        this.register("chatDelay", "options.chat.title", options.getChatDelay());
-        this.register("chatWidth", "options.chat.title", options.getChatWidth());
-        this.register("chatHeightFocused", "options.chat.title", options.getChatHeightFocused());
-        this.register("chatHeightUnfocused", "options.chat.title", options.getChatHeightUnfocused());
-        this.register("narrator", "options.chat.title", options.getNarrator());
-        this.register("autoSuggestions", "options.chat.title", options.getAutoSuggestions());
-        this.register("hideMatchedNames", "options.chat.title", options.getHideMatchedNames());
-        this.register("reducedDebugInfo", "options.chat.title", options.getReducedDebugInfo());
-        this.register("onlyShowSecureChat", "options.chat.title", options.getOnlyShowSecureChat());
+        this.register("chatVisibility", "options.chat.title", options.chatVisibility());
+        this.register("chatColors", "options.chat.title", options.chatColors());
+        this.register("chatLinks", "options.chat.title", options.chatLinks());
+        this.register("chatLinksPrompt", "options.chat.title", options.chatLinksPrompt());
+        this.register("chatOpacity", "options.chat.title", options.chatOpacity());
+        this.register("textBackgroundOpacity", "options.chat.title", options.textBackgroundOpacity());
+        this.register("chatScale", "options.chat.title", options.chatScale());
+        this.register("chatLineSpacing", "options.chat.title", options.chatLineSpacing());
+        this.register("chatDelay", "options.chat.title", options.chatDelay());
+        this.register("chatWidth", "options.chat.title", options.chatWidth());
+        this.register("chatHeightFocused", "options.chat.title", options.chatHeightFocused());
+        this.register("chatHeightUnfocused", "options.chat.title", options.chatHeightUnfocused());
+        this.register("narrator", "options.chat.title", options.narrator());
+        this.register("autoSuggestions", "options.chat.title", options.autoSuggestions());
+        this.register("hideMatchedNames", "options.chat.title", options.hideMatchedNames());
+        this.register("reducedDebugInfo", "options.chat.title", options.reducedDebugInfo());
+        this.register("onlyShowSecureChat", "options.chat.title", options.onlyShowSecureChat());
+        this.register("saveChatDrafts", "options.chat.title", options.saveChatDrafts());
 
         // Accessibility Settings
-        this.register("highContrast", "options.accessibility.title", options.getHighContrast());
-        this.register("backgroundForChatOnly", "options.accessibility.title", options.getBackgroundForChatOnly());
-        this.register("notificationDisplayTime", "options.accessibility.title", options.getNotificationDisplayTime());
-        this.register("darknessEffectScale", "options.accessibility.title", options.getDarknessEffectScale());
-        this.register("damageTiltStrength", "options.accessibility.title", options.getDamageTiltStrength());
-        this.register("hideLightningFlashes", "options.accessibility.title", options.getHideLightningFlashes());
-        this.register("darkMojangStudiosBackground", "options.accessibility.title", options.getMonochromeLogo());
-        this.register("panoramaScrollSpeed", "options.accessibility.title", options.getPanoramaSpeed());
-        this.register("rotateWithMinecart", "options.accessibility.title", options.getRotateWithMinecart());
-        this.register("highContrastBlockOutline", "options.accessibility.title", options.getHighContrastBlockOutline());
+        this.register("highContrast", "options.accessibility.title", options.highContrast());
+        this.register("backgroundForChatOnly", "options.accessibility.title", options.backgroundForChatOnly());
+        this.register("notificationDisplayTime", "options.accessibility.title", options.notificationDisplayTime());
+        this.register("darknessEffectScale", "options.accessibility.title", options.darknessEffectScale());
+        this.register("damageTiltStrength", "options.accessibility.title", options.damageTiltStrength());
+        this.register("hideLightningFlashes", "options.accessibility.title", options.hideLightningFlash());
+        this.register("darkMojangStudiosBackground", "options.accessibility.title", options.darkMojangStudiosBackground());
+        this.register("panoramaScrollSpeed", "options.accessibility.title", options.panoramaSpeed());
+        this.register("hideSplashTexts", "options.accessibility.title", options.hideSplashTexts());
+        this.register("narratorHotkey", "options.accessibility.title", options.narratorHotkey());
+        this.register("rotateWithMinecart", "options.accessibility.title", options.rotateWithMinecart());
+        this.register("highContrastBlockOutline", "options.accessibility.title", options.highContrastBlockOutline());
 
         // Telemetry Data
-        this.register("telemetryOptInExtra", "options.telemetry", options.getTelemetryOptInExtra());
+        this.register("telemetryOptInExtra", "options.telemetry", options.telemetryOptInExtra());
 
         // F3 Settings
         this.register("pauseOnLostFocus", "f3", () -> options.pauseOnLostFocus, value -> options.pauseOnLostFocus = value);
         this.register("advancedItemTooltips", "f3", () -> options.advancedItemTooltips, value -> options.advancedItemTooltips = value);
-        this.register("hitboxes", "f3", () -> MinecraftClient.getInstance().getEntityRenderDispatcher().shouldRenderHitboxes(), value -> MinecraftClient.getInstance().getEntityRenderDispatcher().setRenderHitboxes(value));
-        this.register("chunkborders", "f3", () -> {
-            MinecraftClient.getInstance().debugRenderer.toggleShowChunkBorder();
-            return MinecraftClient.getInstance().debugRenderer.toggleShowChunkBorder();
-        }, value -> {
-            if (MinecraftClient.getInstance().debugRenderer.toggleShowChunkBorder() != value) {
-                MinecraftClient.getInstance().debugRenderer.toggleShowChunkBorder();
-            }
-        });
+
+        List<java.util.Map.Entry<Identifier, DebugScreenEntry>> all = new ArrayList<>(DebugScreenEntries.allEntries().entrySet());
+        all.sort(OptionListAccessor.getComparator());
+        for (Map.Entry<Identifier, DebugScreenEntry> entry : all) {
+            this.register(new DebugStandardSetting("debug_" + entry.getKey(), ((TranslatableContents) entry.getValue().category().label().getContents()).getKey(), entry.getKey()));
+        }
+
         this.register(CustomStandardSetting.ofString(
                 "pieDirectory", "f3",
-                () -> ProfileResult.getHumanReadableName(((PieChartAccessor) MinecraftClient.getInstance().getDebugHud().getPieChart()).standardsettings$getCurrentPath()),
-                value -> ((PieChartAccessor) MinecraftClient.getInstance().getDebugHud().getPieChart()).standardsettings$setCurrentPath(value),
+                () -> ProfileResults.demanglePath(((PieChartAccessor) Minecraft.getInstance().getDebugOverlay().getProfilerPieChart()).standardsettings$getCurrentPath()),
+                value -> ((PieChartAccessor) Minecraft.getInstance().getDebugOverlay().getProfilerPieChart()).standardsettings$setCurrentPath(value),
                 value -> value.startsWith("root") ? value.replace('.', '\u001e').trim() : "root",
-                TextUtil::literal,
+                Component::literal,
                 setting -> {
-                    TextFieldWidget widget = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, 120, 20, setting.getName());
+                    EditBox widget = new EditBox(Minecraft.getInstance().font, 0, 0, 120, 20, setting.getName());
                     widget.setMaxLength(128);
-                    widget.setTextPredicate(string -> string != null && (string.startsWith("root") || string.isEmpty()));
-                    widget.setText(setting.get());
-                    widget.setChangedListener(string -> {
+                    widget.setValue(setting.get().replace('\u001e', '.'));
+                    widget.setResponder(string -> {
                         // allow for backspace / ctrl + x
-                        if (string.isEmpty()) {
-                            widget.setText("root");
+                        if (!string.startsWith("root")) {
+                            widget.setValue("root");
                             return;
                         }
                         setting.set(string);
@@ -389,28 +399,28 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         ).disable();
 
         // More Settings
-        this.register(CustomStandardSetting.ofEnum("perspective", "more", options::getPerspective, options::setPerspective, Perspective.class)).disable();
-        this.register("f1", "more", () -> options.hudHidden, value -> options.hudHidden = value).disable();
-        this.register("sneaking", "more", options.sneakKey::isPressed, value -> {
-            if (options.getSneakToggled().getValue() && options.sneakKey.isPressed() != value) {
+        this.register(CustomStandardSetting.ofEnum("perspective", "more", options::getCameraType, options::setCameraType, CameraType.class)).disable();
+        this.register("f1", "more", () -> options.hideGui, value -> options.hideGui = value).disable();
+        this.register("sneaking", "more", options.keyShift::isDown, value -> {
+            if (options.toggleCrouch().get() && options.keyShift.isDown() != value) {
                 // pressing the sneak key toggles it
-                options.sneakKey.setPressed(true);
+                options.keyShift.setDown(true);
             }
         }).disable();
-        this.register("sprinting", "more", options.sprintKey::isPressed, value -> {
-            if (options.getSprintToggled().getValue() && options.sprintKey.isPressed() != value) {
+        this.register("sprinting", "more", options.keySprint::isDown, value -> {
+            if (options.toggleSprint().get() && options.keySprint.isDown() != value) {
                 // pressing the sprint key toggles it
-                options.sprintKey.setPressed(true);
+                options.keySprint.setDown(true);
             }
         }).disable();
 
         // OnWorldJoin Settings
-        this.onWorldJoin(new SimpleOptionStandardSetting<>("fovOnWorldJoin", "onWorldJoin", options.getFov())).disable();
-        this.onWorldJoin(new SimpleOptionStandardSetting<>("renderDistanceOnWorldJoin", "onWorldJoin", options.getViewDistance())).disable();
-        this.onWorldJoin(new SimpleOptionStandardSetting<>("entityDistanceScalingOnWorldJoin", "onWorldJoin", options.getEntityDistanceScaling())).disable();
-        this.onWorldJoin(new SimpleOptionStandardSetting<>("guiScaleOnWorldJoin", "onWorldJoin", options.getGuiScale()) {
+        this.onWorldJoin(new SimpleOptionStandardSetting<>("fovOnWorldJoin", "onWorldJoin", options.fov())).disable();
+        this.onWorldJoin(new SimpleOptionStandardSetting<>("renderDistanceOnWorldJoin", "onWorldJoin", options.renderDistance())).disable();
+        this.onWorldJoin(new SimpleOptionStandardSetting<>("entityDistanceScalingOnWorldJoin", "onWorldJoin", options.entityDistanceScaling())).disable();
+        this.onWorldJoin(new SimpleOptionStandardSetting<>("guiScaleOnWorldJoin", "onWorldJoin", options.guiScale()) {
             @Override
-            public void set(SimpleOption<Integer> option, Integer value) {
+            public void set(OptionInstance<Integer> option, Integer value) {
                 // bypass vanillas dynamic bounds enforcing for gui scale
                 //noinspection unchecked
                 ((SimpleOptionAccessor<Integer>) (Object) option).standardsettings$setValue(Math.max(0, value));
@@ -418,7 +428,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         });
     }
 
-    private <T> SimpleOptionStandardSetting<T> register(String id, String category, SimpleOption<T> option) {
+    private <T> SimpleOptionStandardSetting<T> register(String id, String category, OptionInstance<T> option) {
         return this.register(new SimpleOptionStandardSetting<>(id, category, option));
     }
 
@@ -467,9 +477,9 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         }
     }
 
-    private void confirmToggleAll(ButtonWidget button) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        Screen screen = client.currentScreen;
+    private void confirmToggleAll(Button button) {
+        Minecraft client = Minecraft.getInstance();
+        Screen screen = client.screen;
         client.setScreen(new ConfirmScreen(
                 confirmed -> {
                     if (confirmed) {
@@ -478,12 +488,12 @@ public class StandardSettingsConfig implements SpeedrunConfig {
                     }
                     client.setScreen(screen);
                 },
-                TextUtil.translatable("speedrunapi.config.standardsettings.option.toggleAll"),
-                TextUtil.translatable("speedrunapi.config.standardsettings.option.toggleAll.description")
+                Component.translatable("speedrunapi.config.standardsettings.option.toggleAll"),
+                Component.translatable("speedrunapi.config.standardsettings.option.toggleAll.description")
                         .append(" ")
-                        .append(TextUtil.translatable("speedrunapi.config.standardsettings.option.toggleAll.confirm")),
-                ScreenTexts.PROCEED,
-                ScreenTexts.CANCEL
+                        .append(Component.translatable("speedrunapi.config.standardsettings.option.toggleAll.confirm")),
+                CommonComponents.GUI_PROCEED,
+                CommonComponents.GUI_CANCEL
         ));
     }
 
@@ -492,7 +502,7 @@ public class StandardSettingsConfig implements SpeedrunConfig {
         if ("toggleAll".equals(field.getName())) {
             return new SpeedrunConfigAPI.CustomOption.Builder<Boolean>(this, this, field, idPrefix)
                     .createWidget((option, innerConfig, configStorage, optionField) ->
-                            ButtonWidget.builder(ScreenTexts.onOrOff(!option.get()), this::confirmToggleAll).dimensions(0, 0, 150, 20).build()
+                            Button.builder(CommonComponents.optionStatus(!option.get()), this::confirmToggleAll).bounds(0, 0, 150, 20).build()
                     ).build();
         }
         return SpeedrunConfig.super.parseField(field, config, idPrefix);
@@ -542,11 +552,11 @@ public class StandardSettingsConfig implements SpeedrunConfig {
     }
 
     @Override
-    public @Nullable Predicate<InputUtil.Key> createInputListener() {
+    public @Nullable Predicate<InputConstants.Key> createInputListener() {
         return key -> {
             if (this.focusedKeyBinding != null) {
-                if (key.getCategory() == InputUtil.Type.KEYSYM && key.getCode() == GLFW.GLFW_KEY_ESCAPE) {
-                    key = InputUtil.UNKNOWN_KEY;
+                if (key.getType() == InputConstants.Type.KEYSYM && key.getValue() == GLFW.GLFW_KEY_ESCAPE) {
+                    key = InputConstants.UNKNOWN;
                 }
                 this.focusedKeyBinding.set(key);
                 this.focusedKeyBinding = null;
