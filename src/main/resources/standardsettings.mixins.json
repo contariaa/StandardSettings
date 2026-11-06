@@ -6,7 +6,6 @@
   "client": [
     "accessors.LanguageManagerAccessor",
     "accessors.MinecraftClientAccessor",
-    "CreateWorldScreenMixin",
     "GameRendererMixin",
     "MinecraftClientMixin",
     "WorldListWidgetEntryMixin",

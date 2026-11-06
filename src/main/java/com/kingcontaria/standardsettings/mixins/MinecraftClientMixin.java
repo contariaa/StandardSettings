@@ -2,8 +2,11 @@ package com.kingcontaria.standardsettings.mixins;
 
 import com.kingcontaria.standardsettings.StandardSettings;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.world.level.LevelInfo;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -21,6 +24,10 @@ import java.util.stream.Stream;
 @Mixin(MinecraftClient.class)
 
 public class MinecraftClientMixin {
+
+    @Shadow
+    @Nullable
+    public Screen currentScreen;
 
     // initialize StandardSettings, doesn't use ClientModInitializer because GameOptions need to be initialized first
     @Inject(method = "initializeGame", at = @At("RETURN"))
@@ -119,10 +126,49 @@ public class MinecraftClientMixin {
         }
     }
 
-    // save the world file name of the last world
+    private static boolean shouldResetSettings = true;
+
     @Inject(method = "startGame", at = @At("HEAD"))
-    private void cacheOptions(String fileName, String worldName, LevelInfo levelInfo, CallbackInfo ci) {
+    private void resetOptions(String fileName, String worldName, LevelInfo levelInfo, CallbackInfo ci) {
+        if (!new File("saves", fileName).exists()) {
+            // reset settings to standardoptions at the start of world creation
+            // don't reset settings if the last world was reset on world preview
+            if (shouldResetSettings) {
+                // StandardSettings.checkSettings() calls window.method_18314() which resizes the screen
+                // this also reinitializes the current screen, which is the TitleScreen, causing Atum to trigger another reset
+                Screen screen = this.currentScreen;
+                try {
+                    this.currentScreen = null;
+
+                    StandardSettings.changeOnWindowActivation = false;
+                    StandardSettings.LOGGER.info("Reset to StandardSettings...");
+                    StandardSettings.load();
+                    StandardSettings.LOGGER.info("Checking Settings...");
+                    StandardSettings.checkSettings();
+                    StandardSettings.options.save();
+                    shouldResetSettings = false;
+                } finally {
+                    this.currentScreen = screen;
+                }
+            }
+        } else {
+            StandardSettings.optionsCache.load(fileName);
+        }
+
+        // save the world file name of the last world
         StandardSettings.lastWorld = fileName;
+    }
+
+    // activate OnWorldJoin options when finishing world creation
+    // if instance is unfocused, it will instead wait
+    @Inject(method = "startGame", at = @At("RETURN"))
+    private void onWorldJoin(CallbackInfo ci) {
+        if (StandardSettings.client.isWindowFocused()) {
+            StandardSettings.changeSettingsOnJoin();
+        } else {
+            StandardSettings.changeOnWindowActivation = true;
+        }
+        shouldResetSettings = true;
     }
 
     // activate OnWorldJoin options when focusing the instance
